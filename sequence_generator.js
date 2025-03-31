@@ -48,6 +48,7 @@ class SequenceGenerator {
       }
     }
   }
+  
   nearestNeighbor(p) {
     let best = null;
     let bestDist = Infinity;

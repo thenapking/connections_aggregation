@@ -10,7 +10,8 @@ class Attractor {
 
   draw() {
     if(!show_agents) {return;}
-    fill(255, 0, 0);
+    let colour_idx = palette.groups[0]
+    fill(palette.colours[colour_idx]);
     noStroke();
     ellipse(this.position.x, this.position.y, this.radius, this.radius);
   }
@@ -18,8 +19,8 @@ class Attractor {
 
 function create_attractors(){
   for (let i = 0; i < NUM_ATTRACTORS; i++) {
-    let x = random(width);
-    let y = random(height);
+    let x = random(w);
+    let y = random(h);
     attractors.push(new Attractor(x, y));
   }
 }

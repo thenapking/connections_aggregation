@@ -17,13 +17,13 @@ class Grid {
     this.resulting_groups = [];
   }
 
-  insert_points(points) {
+  insert(points) {
     for (let pt of points) {
-      let c = this.get_closest_centroid(pt, this.cell_size);
+      let c = this.closest_centroid(pt, this.cell_size);
       
       if (!c) {
         let g = new Hotspot(pt);
-        let pos = this.get_grid_position(g.centroid);
+        let pos = this.coordinates(g.centroid);
         if(pos[0] < 0 || pos[1] < 0 || pos[0] >= this.n_cols || pos[1] >= this.n_rows) {
           console.log("Error: centroid out of range?", pos);
         } else {
@@ -43,8 +43,8 @@ class Grid {
     }
   }
 
-  get_closest_centroid(pt, max_dist = 1e8) {
-    let pos = this.get_grid_position(pt);
+  closest_centroid(pt, max_dist = 1e8) {
+    let pos = this.coordinates(pt);
     let i = pos[0], j = pos[1];
     let shortest = this.cell_size * 100;
     let nearest = null;
@@ -61,18 +61,18 @@ class Grid {
     return nearest;
   }
 
-  get_grid_position(pt) {
+  coordinates(pt) {
     let i = Math.floor((pt.x - this.x_min) / this.cell_size);
     let j = Math.floor((pt.y - this.y_min) / this.cell_size);
     return [i, j];
   }
-  
+
   redistribute_points(points) {
     for (let g of this.resulting_groups) {
       g.delete_points();
     }
     for (let pt of points) {
-      let c = this.get_closest_centroid(pt, this.cell_size * 20);
+      let c = this.closest_centroid(pt, this.cell_size * 20);
       if (c != null) {
         let g = this.cells[c[0]][c[1]];
         g.add_point(pt);

@@ -11,8 +11,8 @@ class Agent {
     this.set_angle();
 
     let previous = this.position.copy();
-    let velocity = p5.Vector.fromAngle(this.angle).mult(STEP_SIZE);
     
+    let velocity = p5.Vector.fromAngle(this.angle).mult(STEP_SIZE);
     this.position = p5.Vector.add(this.position, velocity);;
     this.edges();
 
@@ -30,9 +30,9 @@ class Agent {
 
   edges(){
     if (this.position.x < 0) { this.position.x = 0; this.angle = PI - this.angle; }
-    if (this.position.x > width) { this.position.x = width; this.angle = PI - this.angle; }
+    if (this.position.x > w) { this.position.x = w; this.angle = PI - this.angle; }
     if (this.position.y < 0) { this.position.y = 0; this.angle = -this.angle; }
-    if (this.position.y > height) { this.position.y = height; this.angle = -this.angle; }
+    if (this.position.y > h) { this.position.y = h; this.angle = -this.angle; }
 
   }
 
@@ -52,6 +52,8 @@ class Agent {
     } else {
       this.angle += random(-TURN_ANGLE, TURN_ANGLE);
     }
+
+    this.angle += this.avoid();
   }
 
   check() {
@@ -67,6 +69,29 @@ class Agent {
         }
       }
     }
+  }
+
+  avoid() {
+    let adjustment = 0;
+    let count = 0;
+    let margin = 10; // safety margin
+    for (let obs of obstacles) {
+      let d = p5.Vector.dist(this.position, obs.position);
+      if (d < obs.radius + margin) {
+        let desiredAngle = atan2(this.position.y - obs.position.y, this.position.x - obs.position.x);
+        let diff = desiredAngle - this.angle;
+        while (diff < -PI) diff += TWO_PI;
+        while (diff > PI) diff -= TWO_PI;
+        adjustment += diff;
+        count++;
+      }
+    }
+    if (count > 0) {
+      adjustment /= count;
+      adjustment *= 0.5; // scale down the obstacle avoidance influence
+      return adjustment;
+    }
+    return 0;
   }
 
   updateJourney(newEmitter) {

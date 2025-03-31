@@ -1,7 +1,15 @@
+const DPI = 96
+let w = 12 * DPI;
+let h = 16 * DPI;
+let bw = 1 * DPI;
+
+
+
 let agents = [];
 let emitters = [];
 let attractors = [];
 let journeys = [];
+let obstacles = [];
 let filtered_journeys = [];
 let median_journey_count = 0;
 let top_journey_count = 0;  
@@ -12,6 +20,9 @@ const SENSOR_DISTANCE = 10;
 const TURN_ANGLE = 0.3;
 const STEP_SIZE = 1.5;
 const EMITTER_ASSIGN_DISTANCE = 20;
+
+const EMITTER_MARGIN = 30;
+const OBSTACLE_MARGIN = 30;
 
 const PATH_DETAIL = 80;
 const MIN_JOURNEYS_TO_DRAW = 10;
@@ -27,6 +38,7 @@ const CSW = 8;
 const NUM_AGENTS = 50;
 const NUM_EMITTERS = 80;
 const NUM_ATTRACTORS = 1500
+const NUM_OBSTACLES = 100;
 
 const CELL_SIZE = 20;
 
@@ -37,36 +49,32 @@ let connections = [];
 let chains = [];  
 
 function setup() {
-  createCanvas(1200, 1200);
+  createCanvas(w + 2*bw, h + 2*bw);
 
-  foodLayer = createGraphics(width, height);
+
+  foodLayer = createGraphics(w + 2*bw, h + 2*bw);
   foodLayer.background(0);
 
   create_attractors();
-  for (let i = 0; i < NUM_EMITTERS; i++) {
-    let x = random(width);
-    let y = random(height);
-    emitters.push(new Emitter(x, y));
-  }
-  for (let emitter of emitters) {
-    for (let i = 0; i < NUM_AGENTS; i++) {
-      agents.push(new Agent(emitter.position.x, emitter.position.y, emitter));
-    }
-  }
+  create_obstacles();
+  create_emitters(w, h);
+  create_agents();
+  
 }
 
 function draw() {
-  background(51);
-  foodLayer.fill(0, 20);
-  foodLayer.noStroke();
-  foodLayer.rect(0, 0, width, height);
+  background(palette.background);
+  translate(bw, bw);
+  
+  add_food();
+  
   
   draw_attractors();
   draw_emitters();
+  draw_obstacles();
 
   draw_journeys();
   draw_hotspots();
-  // draw_connections();
   draw_chains();
   draw_agents();
 }
@@ -126,4 +134,15 @@ function draw_attractors() {
   }
 }
 
+function draw_obstacles() {
+  for (let obstacle of obstacles) {
+    obstacle.draw();
+  }
+}
+
+function add_food(){
+  foodLayer.fill(0, 20);
+  foodLayer.noStroke();
+  foodLayer.rect(0, 0, width, height);
+}
 

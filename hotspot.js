@@ -26,7 +26,9 @@ class Hotspot {
   draw(){
     if(this.centroid === undefined) { return }
     noStroke();
-    fill(255, 192, 0);
+    let palette_idx = palette.groups[2][0];
+    let c = palette.colours[palette_idx];
+    fill(c);
     let sz = this.count > 2 ? CSW*2 : CSW+2;
     ellipse(this.centroid.x, this.centroid.y, sz);
   }
@@ -87,9 +89,9 @@ function generateHotspotsAndFlow() {
     }
   }
 
-  let bbox = { xMin: 0, yMin: 0, xMax: width, yMax: height };
+  let bbox = { xMin: 0, yMin: 0, xMax: w, yMax: h };
   let grid = new Grid(bbox, CELL_SIZE);
-  grid.insert_points(allPoints);
+  grid.insert(allPoints);
   hotspots = grid.resulting_groups;
 
   hotspots = mergeCloseHotspots(hotspots, MIN_HOTSPOT_DISTANCE);
@@ -297,7 +299,9 @@ function draw_chains() {
     // let sw = map(chain.count, MIN_CHAIN_COUNT, MAX_CHAIN_COUNT, MIN_STROKE, MAX_STROKE, true);
     strokeWeight(4);
     noFill();
-    stroke(0, 255, 0);
+    let palette_idx = palette.groups[2][0];
+    let c = palette.colours[palette_idx];
+    stroke(c);
     beginShape();
     curveVertex(chain.points[0].x, chain.points[0].y);
     for (let pt of chain.points) {
