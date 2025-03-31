@@ -26,9 +26,7 @@ class Hotspot {
   draw(){
     if(this.centroid === undefined) { return }
     noStroke();
-    let palette_idx = palette.groups[2][0];
-    let c = palette.colours[palette_idx];
-    fill(c);
+    fill(palette.white);
     let sz = this.count > 2 ? CSW*2 : CSW+2;
     ellipse(this.centroid.x, this.centroid.y, sz);
   }
@@ -299,9 +297,7 @@ function draw_chains() {
     // let sw = map(chain.count, MIN_CHAIN_COUNT, MAX_CHAIN_COUNT, MIN_STROKE, MAX_STROKE, true);
     strokeWeight(4);
     noFill();
-    let palette_idx = palette.groups[2][0];
-    let c = palette.colours[palette_idx];
-    stroke(c);
+    stroke(palette.white);
     beginShape();
     curveVertex(chain.points[0].x, chain.points[0].y);
     for (let pt of chain.points) {

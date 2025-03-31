@@ -5,11 +5,16 @@ let bw = 1 * DPI;
 
 
 
-let agents = [];
+let slimeagents = [];
 let emitters = [];
 let attractors = [];
 let journeys = [];
 let obstacles = [];
+let groups = [];
+let hotspots = [];
+let connections = [];
+let chains = [];  
+
 let filtered_journeys = [];
 let median_journey_count = 0;
 let top_journey_count = 0;  
@@ -35,18 +40,17 @@ const MAX_CHAIN_COUNT = 50;
 
 const CSW = 8;
 
-const NUM_AGENTS = 50;
+const NUM_SLIMEAGENTS = 50;
 const NUM_EMITTERS = 80;
 const NUM_ATTRACTORS = 1500
 const NUM_OBSTACLES = 100;
 
 const CELL_SIZE = 20;
 
-let show_agents = true
+let show_slimeagents = true
+let exporting = false;
 
-let hotspots = [];
-let connections = [];
-let chains = [];  
+
 
 function setup() {
   createCanvas(w + 2*bw, h + 2*bw);
@@ -55,48 +59,50 @@ function setup() {
   foodLayer = createGraphics(w + 2*bw, h + 2*bw);
   foodLayer.background(0);
 
-  create_attractors();
-  create_obstacles();
+  setup_gui();
+
+
   create_emitters(w, h);
-  create_agents();
+  create_slimeagents();
   
 }
 
 function draw() {
+  add_food();
+  if(exporting){ beginRecordSVG(this, 'flower_agents.svg') }
+
   background(palette.background);
   translate(bw, bw);
   
-  add_food();
-  
-  
-  draw_attractors();
-  draw_emitters();
-  draw_obstacles();
+  draw_groups(palette.depth[0]);
+  draw_groups(palette.depth[1]);
 
-  draw_journeys();
-  draw_hotspots();
-  draw_chains();
-  draw_agents();
+  push();
+    draw_journeys();
+    draw_hotspots();
+    draw_chains();
+    draw_slimeagents();
+  pop();
+
+  draw_groups(palette.depth[2]);
+  draw_groups(palette.depth[3]);
+  draw_groups(palette.depth[4]);
+  draw_groups(palette.depth[5]);
+  delete_empty_groups();
+
+  if(exporting){ 
+    endRecordSVG() 
+    exporting = false;
+  }
 }
 
-function keyPressed() {
-  if (key === 'h') {
-    generateHotspotsAndFlow();
-    loop();
-  }
 
-  if( key === 'a'){
-    show_agents = !show_agents
-  }
-  
-}
-
-function draw_agents() {
-  for (let agent of agents) {
-    agent.update();
-    agent.check();
-    if(show_agents){
-      agent.draw();
+function draw_slimeagents() {
+  for (let slimeagent of slimeagents) {
+    slimeagent.update();
+    slimeagent.check();
+    if(show_slimeagents){
+      slimeagent.draw();
     } 
   }
 }
@@ -146,3 +152,41 @@ function add_food(){
   foodLayer.rect(0, 0, width, height);
 }
 
+
+function mousePressed() {
+  let position = createVector(mouseX - bw, mouseY - bw)
+  let group = new Group(position, 
+    groupSettings.fillColorIndex,
+    groupSettings.strokeColorIndex,
+    groupSettings
+  )
+  groups.push(group);
+}
+
+function keyPressed() {
+  if (key === 'p') {
+    saveCanvas('plant', 'png');
+  }
+  
+  if (key === 's') {
+    exporting = true;
+    let old_palette = palette_name;
+    palette_name = "debug";
+    palette = palettes[palette_name];
+    redraw();
+    palette_name = old_palette;
+    palette = palettes[palette_name];
+    exporting = false;
+  }
+
+  if (key === 'd') {
+    generateHotspotsAndFlow();
+    loop();
+  }
+
+  if( key === 'a'){
+    show_slimeagents = !show_slimeagents
+  }
+  
+}
+  

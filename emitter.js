@@ -40,10 +40,10 @@ function create_emitters(width, height) {
   }
 }
 
-function create_agents(){
+function create_slimeagents(){
   for (let emitter of emitters) {
-    for (let i = 0; i < NUM_AGENTS; i++) {
-      agents.push(new Agent(emitter.position.x, emitter.position.y, emitter));
+    for (let i = 0; i < NUM_SLIMEAGENTS; i++) {
+      slimeagents.push(new SlimeAgent(emitter.position.x, emitter.position.y, emitter));
     }
   }
 }

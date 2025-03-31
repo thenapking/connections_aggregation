@@ -9,7 +9,7 @@ class Attractor {
   }
 
   draw() {
-    if(!show_agents) {return;}
+    if(!show_slimeagents) {return;}
     let colour_idx = palette.groups[0]
     fill(palette.colours[colour_idx]);
     noStroke();

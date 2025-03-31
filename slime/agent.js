@@ -1,4 +1,4 @@
-class Agent {
+class SlimeAgent {
   constructor(x, y, emitter) {
     this.position = createVector(x, y);
     this.angle = random(TWO_PI);
