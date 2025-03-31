@@ -75,8 +75,27 @@ class Agent {
     }
   }
   draw() {
-    fill(255);
-    noStroke();
-    ellipse(this.position.x, this.position.y, 4, 4);
+      fill(255);
+      noStroke();
+      ellipse(this.position.x, this.position.y, 2, 2);
   }
+}
+
+
+const SNAP_DISTANCE = 10; // maximum distance (in pixels) for an agent to be snapped to a connection
+
+function getSnappedPoint(pos) {
+  let bestDist = SNAP_DISTANCE;
+  let bestPoint = null;
+  // Iterate through each connection and each point along its path
+  for (let conn of filtered_connections) {
+    for (let p of conn.path) {
+      let d = p5.Vector.dist(pos, p);
+      if (d < bestDist) {
+        bestDist = d;
+        bestPoint = p;
+      }
+    }
+  }
+  return bestPoint;
 }
