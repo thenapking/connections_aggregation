@@ -3,7 +3,7 @@ class Hotspot {
     this.points = [pt.copy()];
     this.centroid = pt.copy();
     this.id = null;
-    this.connectionCount = 0;
+    this.count = 0;
   }
 
   add_point(pt) {
@@ -27,7 +27,7 @@ class Hotspot {
     if(this.centroid === undefined) { return }
     noStroke();
     fill(255, 192, 0);
-    let sz = this.connectionCount > 2 ? CSW*2 : CSW+2;
+    let sz = this.count > 2 ? CSW*2 : CSW+2;
     ellipse(this.centroid.x, this.centroid.y, sz);
   }
 }
@@ -56,14 +56,14 @@ function mergeCloseHotspots(hotspots, minDistance) {
 
 function mergeHotspotGroup(group) {
   let sumX = 0, sumY = 0, totalPoints = 0;
-  let connectionCount = 0;
+  let count = 0;
   for (let h of group) {
     // Weight the centroid by the number of points in the group
     sumX += h.centroid.x * h.points.length;
     sumY += h.centroid.y * h.points.length;
     totalPoints += h.points.length;
-    // You could also sum or take the maximum of the connection counts:
-    connectionCount = Math.max(connectionCount, h.connectionCount);
+    // You could also sum or take the maximum of the journey counts:
+    count = Math.max(count, h.count);
   }
   let newCentroid = createVector(sumX / totalPoints, sumY / totalPoints);
   let newHotspot = new Hotspot(newCentroid);
@@ -72,7 +72,7 @@ function mergeHotspotGroup(group) {
     newHotspot.points = newHotspot.points.concat(h.points);
   }
   newHotspot.recompute_centroid();
-  newHotspot.connectionCount = connectionCount;
+  newHotspot.count = count;
   return newHotspot;
 }
 
@@ -82,11 +82,11 @@ function mergeHotspotGroup(group) {
 function generateHotspotsAndFlow() {
   let allPoints = [];
 
-  filter_connections();
+  filter_journeys();
 
-  for(let connection of filtered_connections){
-    for (let i = 0; i < connection.path.length; i++) {
-      allPoints.push(connection.path[i].copy());
+  for(let journey of filtered_journeys){
+    for (let i = 0; i < journey.path.length; i++) {
+      allPoints.push(journey.path[i].copy());
     }
   }
 
@@ -105,8 +105,8 @@ function generateHotspotsAndFlow() {
   
   let trajectories = [];
 
-  for(let connection of filtered_connections){
-    trajectories.push(connection.path);
+  for(let journey of filtered_journeys){
+    trajectories.push(journey.path);
   }
 
   let seqGen = new SequenceGenerator(hotspots, trajectories, null);
@@ -116,10 +116,10 @@ function generateHotspotsAndFlow() {
     let from = line.attributes.FROM;
     let to = line.attributes.TO;
     if (hotspots[from]) {
-      hotspots[from].connectionCount++;
+      hotspots[from].count++;
     }
     if (hotspots[to]) {
-      hotspots[to].connectionCount++;
+      hotspots[to].count++;
     }
   }
   

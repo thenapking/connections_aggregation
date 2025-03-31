@@ -1,8 +1,8 @@
 let agents = [];
 let emitters = [];
 let attractors = [];
-let connections = [];
-let filtered_connections = [];
+let journeys = [];
+let filtered_journeys = [];
 let foodLayer;
 
 const SENSOR_ANGLE = Math.PI / 6;
@@ -55,7 +55,7 @@ function draw() {
   draw_attractors();
   draw_emitters();
 
-  draw_connections();
+  draw_journeys();
   draw_hotspots();
   draw_flowlines();
   draw_agents();
@@ -85,10 +85,10 @@ function draw_agents() {
   }
 }
 
-function draw_connections() {
+function draw_journeys() {
   if(hotspots.length > 0) return;
   
-  for (let conn of filtered_connections) {
+  for (let conn of filtered_journeys) {
     conn.draw();
   }
 }

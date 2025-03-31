@@ -4,7 +4,7 @@ class Agent {
     this.angle = random(TWO_PI);
     this.assignedEmitter = emitter;
     this.path = [this.position.copy()];
-    this.pathLength = 0;
+    this.length = 0;
   }
   update() {
     let sensorLeft = p5.Vector.fromAngle(this.angle - SENSOR_ANGLE).setMag(SENSOR_DISTANCE).add(this.position);
@@ -30,7 +30,7 @@ class Agent {
     if (newPos.y > height) { newPos.y = height; this.angle = -this.angle; }
     this.position = newPos;
     this.path.push(this.position.copy());
-    this.pathLength += p5.Vector.dist(oldPos, this.position);
+    this.length += p5.Vector.dist(oldPos, this.position);
     foodLayer.noStroke();
     foodLayer.fill(255, 50);
     foodLayer.ellipse(this.position.x, this.position.y, 2, 2);
@@ -44,18 +44,18 @@ class Agent {
       if (emitter !== this.assignedEmitter) {
         let d = p5.Vector.dist(this.position, emitter.position);
         if (d < EMITTER_ASSIGN_DISTANCE) {
-          this.updateConnection(emitter);
+          this.updateJourney(emitter);
           this.assignedEmitter = emitter;
           this.path = [this.position.copy()];
-          this.pathLength = 0;
+          this.length = 0;
           break;
         }
       }
     }
   }
-  updateConnection(newEmitter) {
+  updateJourney(newEmitter) {
     let existing = null;
-    for (let conn of connections) {
+    for (let conn of journeys) {
       if ((conn.emitterA === this.assignedEmitter && conn.emitterB === newEmitter) ||
           (conn.emitterA === newEmitter && conn.emitterB === this.assignedEmitter)) {
         existing = conn;
@@ -63,14 +63,14 @@ class Agent {
       }
     }
     if (existing == null) {
-      let newConn = new Connection(this.assignedEmitter, newEmitter, this.path.slice(), this.pathLength);
-      newConn.journeyCount = 1;
-      connections.push(newConn);
+      let newConn = new Journey(this.assignedEmitter, newEmitter, this.path.slice(), this.length);
+      newConn.count = 1;
+      journeys.push(newConn);
     } else {
-      existing.journeyCount++;
-      if (this.pathLength < existing.pathLength) {
+      existing.count++;
+      if (this.length < existing.length) {
         existing.path = this.path.slice();
-        existing.pathLength = this.pathLength;
+        existing.length = this.length;
       }
     }
   }
@@ -82,13 +82,13 @@ class Agent {
 }
 
 
-const SNAP_DISTANCE = 10; // maximum distance (in pixels) for an agent to be snapped to a connection
+const SNAP_DISTANCE = 10; // maximum distance (in pixels) for an agent to be snapped to a journey
 
 function getSnappedPoint(pos) {
   let bestDist = SNAP_DISTANCE;
   let bestPoint = null;
-  // Iterate through each connection and each point along its path
-  for (let conn of filtered_connections) {
+  // Iterate through each journey and each point along its path
+  for (let conn of filtered_journeys) {
     for (let p of conn.path) {
       let d = p5.Vector.dist(pos, p);
       if (d < bestDist) {
