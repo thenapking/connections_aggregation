@@ -1,20 +1,18 @@
 class Attractor {
   constructor(x, y) {
     this.position = createVector(x, y);
-    this.radius = 5;
+    this.radius = 10;
   }
 
   discharge() {
-    foodLayer.noStroke();
-    foodLayer.fill(255, 50);
-    foodLayer.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2);
+    deposit_food(this.position, this.radius);
   }
 
   draw() {
     if(!show_agents) {return;}
     fill(255, 0, 0);
     noStroke();
-    ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2);
+    ellipse(this.position.x, this.position.y, this.radius, this.radius);
   }
 }
 

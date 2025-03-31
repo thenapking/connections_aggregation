@@ -32,7 +32,6 @@ class Hotspot {
   }
 }
 
-const MIN_HOTSPOT_DISTANCE = 20; // Set your minimum distance in pixels
 
 function mergeCloseHotspots(hotspots, minDistance) {
   let merged = [];
@@ -58,22 +57,20 @@ function mergeHotspotGroup(group) {
   let sumX = 0, sumY = 0, totalPoints = 0;
   let count = 0;
   for (let h of group) {
-    // Weight the centroid by the number of points in the group
     sumX += h.centroid.x * h.points.length;
     sumY += h.centroid.y * h.points.length;
     totalPoints += h.points.length;
-    // You could also sum or take the maximum of the journey counts:
     count = Math.max(count, h.count);
   }
   let newCentroid = createVector(sumX / totalPoints, sumY / totalPoints);
-  let newHotspot = new Hotspot(newCentroid);
-  newHotspot.points = [];
+  let hotspot = new Hotspot(newCentroid);
+  hotspot.points = [];
   for (let h of group) {
-    newHotspot.points = newHotspot.points.concat(h.points);
+    hotspot.points = hotspot.points.concat(h.points);
   }
-  newHotspot.recompute_centroid();
-  newHotspot.count = count;
-  return newHotspot;
+  hotspot.recompute_centroid();
+  hotspot.count = count;
+  return hotspot;
 }
 
 
@@ -110,11 +107,11 @@ function generateHotspotsAndFlow() {
   }
 
   let seqGen = new SequenceGenerator(hotspots, trajectories, null);
-  flowLines = seqGen.create_flow_lines();
+  connections = seqGen.create_connections();
   
-  for (let line of flowLines) {
-    let from = line.attributes.FROM;
-    let to = line.attributes.TO;
+  for (let connection of connections) {
+    let from = connection.from;
+    let to = connection.to;
     if (hotspots[from]) {
       hotspots[from].count++;
     }
@@ -123,21 +120,22 @@ function generateHotspotsAndFlow() {
     }
   }
   
-  flowLines = refineNetwork(flowLines, 20, 140);
+  connections = refineNetwork(connections, 20, 140);
+  chains = groupChains(connections, hotspots);
  
 }
 
-function refineNetwork(flowLines, minAngle, maxAngle) {
-  let newFlowLines = flowLines.slice();
+function refineNetwork(connections, minAngle, maxAngle) {
+  let new_connections = connections.slice();
   let iterations = 0;
   let maxIterations = 3;
   let changed = true;
   let nextNodeId = hotspots.length;
   while (changed && iterations < maxIterations) {
     changed = false;
-    let nodes = getNodesFromFlowLines(newFlowLines);
+    let nodes = getNodesFromFlowLines(new_connections);
     for (let node of nodes) {
-      let edges = getEdgesForNode(node, newFlowLines);
+      let edges = getEdgesForNode(node, new_connections);
       if (edges.length < 2) continue;
       let edgeAngles = [];
       for (let edge of edges) {
@@ -159,10 +157,10 @@ function refineNetwork(flowLines, minAngle, maxAngle) {
           let len2 = p5.Vector.dist(edge2.node, edge2.other);
           let edgeToSplit = (len1 >= len2) ? edge1 : edge2;
           let mid = p5.Vector.add(edgeToSplit.node, edgeToSplit.other).mult(0.5);
-          let newHotspot = new Hotspot(mid);
-          newHotspot.id = nextNodeId++;
-          hotspots.push(newHotspot);
-          newFlowLines = splitEdge(newFlowLines, edgeToSplit, newHotspot);
+          let hotspot = new Hotspot(mid);
+          hotspot.id = nextNodeId++;
+          hotspots.push(hotspot);
+          new_connections = split_edge(new_connections, edgeToSplit, hotspot);
           changed = true;
           break;
         }
@@ -171,15 +169,16 @@ function refineNetwork(flowLines, minAngle, maxAngle) {
     }
     iterations++;
   }
-  return newFlowLines;
+  return new_connections;
 }
 
-function getNodesFromFlowLines(flowLines) {
+function getNodesFromFlowLines(new_connections) {
   let nodes = [];
   let tolerance = 0.001;
-  for (let line of flowLines) {
-    let ptA = line.geometry[0];
-    let ptB = line.geometry[1];
+  for (let connection of new_connections) {
+    if(!connection.geometry) continue;
+    let ptA = connection.geometry[0];
+    let ptB = connection.geometry[1];
     addNode(ptA, nodes, tolerance);
     addNode(ptB, nodes, tolerance);
   }
@@ -193,32 +192,120 @@ function addNode(pt, nodes, tol) {
   nodes.push({ id: pt.id !== undefined ? pt.id : null, pos: pt.copy() });
 }
 
-function getEdgesForNode(node, flowLines) {
+function getEdgesForNode(node, connections) {
   let edges = [];
   let tol = 0.001;
-  for (let line of flowLines) {
-    let a = line.geometry[0];
-    let b = line.geometry[1];
+  for (let connection of connections) {
+    let a = connection.geometry[0];
+    let b = connection.geometry[1];
     if (p5.Vector.dist(node.pos, a) < tol) {
-      edges.push({ node: a.copy(), other: b.copy(), line: line });
+      edges.push({ node: a.copy(), other: b.copy(), connection: connection });
     } else if (p5.Vector.dist(node.pos, b) < tol) {
-      edges.push({ node: b.copy(), other: a.copy(), line: line });
+      edges.push({ node: b.copy(), other: a.copy(), connection: connection });
     }
   }
   return edges;
 }
 
-function splitEdge(flowLines, edgeToSplit, newNode) {
-  let newFlowLines = [];
-  for (let line of flowLines) {
-    if (line === edgeToSplit.line) {
-      newFlowLines.push({ geometry: [edgeToSplit.node.copy(), newNode.centroid.copy()] });
-      newFlowLines.push({ geometry: [newNode.centroid.copy(), edgeToSplit.other.copy()] });
+function split_edge(connections, edge, hotspot) {
+  let new_connections = [];
+  for (let connection of connections) {
+    if (connection === edge.connection) {
+      let connection_a = new Connection(edge.connection.from, hotspot.id, [edge.node.copy(), hotspot.centroid.copy()], edge.connection.count);
+      let connection_b = new Connection(hotspot.id, edge.connection.to, [hotspot.centroid.copy(), edge.other.copy()], edge.connection.count);
+
+      new_connections.push(connection_a);
+      new_connections.push(connection_b);
     } else {
-      newFlowLines.push(line);
+      new_connections.push(connection);
     }
   }
-  return newFlowLines;
+  return new_connections;
+}
+
+
+
+function groupChains(connections, hotspots) {
+  let hotspotConnections = {};
+  for (let h of hotspots) {
+    hotspotConnections[h.id] = [];
+  }
+  for (let conn of connections) {
+    hotspotConnections[conn.from].push(conn);
+    hotspotConnections[conn.to].push(conn);
+  }
+
+  let visited = new Set(); // Mark connections we've already processed.
+  let chains = [];
+
+  // Helper function to follow a chain starting from a given hotspot along a connection.
+  function followChain(startConn, startHotspot) {
+    let chainPoints = [];
+    let chainCount = 0;
+    let currentHotspot = startHotspot;
+    let currentConn = startConn;
+    // Start chain with the starting hotspot's centroid.
+    let startH = hotspots.find(h => h.id === currentHotspot);
+    if (startH) chainPoints.push(startH.centroid.copy());
+    
+    // Follow the chain:
+    while (true) {
+      visited.add(currentConn);
+      chainCount += currentConn.count;
+      // Determine the next hotspot (the one on the other end of the connection)
+      let nextHotspot = (currentConn.from === currentHotspot) ? currentConn.to : currentConn.from;
+      let nextH = hotspots.find(h => h.id === nextHotspot);
+      if (!nextH) break;
+      chainPoints.push(nextH.centroid.copy());
+      
+      // If next hotspot is an endpoint (i.e. its connection count is not 2), or there’s no unvisited connection from it, stop.
+      if (nextH.count !== 2) break;
+      let nextConns = hotspotConnections[nextHotspot].filter(conn => !visited.has(conn));
+      if (nextConns.length === 0) break;
+      
+      // Otherwise, follow the single available unvisited connection.
+      currentConn = nextConns[0];
+      currentHotspot = nextHotspot;
+    }
+    return { points: chainPoints, count: chainCount };
+  }
+
+  for (let h of hotspots) {
+    if (h.count !== 2) {
+      let conns = hotspotConnections[h.id];
+      for (let conn of conns) {
+        if (!visited.has(conn)) {
+          let chain = followChain(conn, h.id);
+          chains.push(chain);
+        }
+      }
+    }
+  }
+
+  for (let conn of connections) {
+    if (!visited.has(conn)) {
+      let chain = followChain(conn, conn.from);
+      chains.push(chain);
+    }
+  }
+
+  return chains;
+}
+
+function draw_chains() {
+  for (let chain of chains) {
+    // let sw = map(chain.count, MIN_CHAIN_COUNT, MAX_CHAIN_COUNT, MIN_STROKE, MAX_STROKE, true);
+    strokeWeight(4);
+    noFill();
+    stroke(0, 255, 0);
+    beginShape();
+    curveVertex(chain.points[0].x, chain.points[0].y);
+    for (let pt of chain.points) {
+      curveVertex(pt.x, pt.y);
+    }
+    curveVertex(chain.points[chain.points.length-1].x, chain.points[chain.points.length-1].y);
+    endShape();
+  }
 }
 
 

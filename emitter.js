@@ -3,6 +3,7 @@ class Emitter {
     this.position = createVector(x, y);
     this.radius = 10;
   }
+  
   draw() {
     fill(0, 0, 255);
     noStroke();

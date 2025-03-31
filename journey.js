@@ -8,19 +8,6 @@ class Journey {
     this.path = this.resample(path)
     this.count = 1;
   }
-  
-  updateWithNewJourney(new_path, newLength) {
-    new_path = resample(new_path);
-    for (let i = 0; i < PATH_DETAIL; i++) {
-      this.path[i].x = (this.path[i].x * this.count + new_path[i].x) / (this.count + 1);
-      this.path[i].y = (this.path[i].y * this.count + new_path[i].y) / (this.count + 1);
-    }
-    this.count++;
-    
-    if (newLength < this.length) {
-      this.length = newLength;
-    }
-  }
 
   calculate_distances(path){
     let aggregated_distances = [0];
@@ -71,5 +58,17 @@ class Journey {
 
 function filter_journeys(){
   filtered_journeys = journeys.filter(conn => conn.count >= MIN_JOURNEYS_TO_DRAW);
+}
+
+function quantile(q) {
+  const counts = filtered_journeys.map(item => item.count).sort((a, b) => a - b);
+  const pos = (counts.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+  if (counts[base + 1] !== undefined) {
+    return counts[base] + rest * (counts[base + 1] - counts[base]);
+  } else {
+    return counts[base];
+  }
 }
 

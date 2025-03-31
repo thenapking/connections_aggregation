@@ -60,8 +60,9 @@ class SequenceGenerator {
     }
     return best;
   }
-  create_flow_lines() {
-    let lines = [];
+
+  create_connections() {
+    let connections = [];
     for (let key in this.sequences) {
       if (this.sequences.hasOwnProperty(key)) {
         let parts = key.split(",");
@@ -69,11 +70,11 @@ class SequenceGenerator {
         let to = parts[1];
         let fromFeature = this.id_to_centroid[from].feature;
         let toFeature = this.id_to_centroid[to].feature;
-        let lineGeom = [fromFeature.geometry.copy(), toFeature.geometry.copy()];
-        let flowFeature = { geometry: lineGeom, attributes: { FROM: parseInt(from), TO: parseInt(to), COUNT: this.sequences[key] } };
-        lines.push(flowFeature);
+        let geometry = [fromFeature.geometry.copy(), toFeature.geometry.copy()];
+        let connection = new Connection(parseInt(from), parseInt(to), geometry, this.sequences[key]);
+        connections.push(connection);
       }
     }
-    return lines;
+    return connections;
   }
 }

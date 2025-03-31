@@ -6,13 +6,44 @@ class Agent {
     this.path = [this.position.copy()];
     this.length = 0;
   }
+
   update() {
+    this.set_angle();
+
+    let previous = this.position.copy();
+    let velocity = p5.Vector.fromAngle(this.angle).mult(STEP_SIZE);
+    
+    this.position = p5.Vector.add(this.position, velocity);;
+    this.edges();
+
+    this.path.push(this.position.copy());
+
+    this.length += p5.Vector.dist(previous, this.position);
+
+    deposit_food(this.position, 2);
+  }
+
+  sense(pos) {
+    let c = foodLayer.get(floor(pos.x), floor(pos.y));
+    return c[0];
+  }
+
+  edges(){
+    if (this.position.x < 0) { this.position.x = 0; this.angle = PI - this.angle; }
+    if (this.position.x > width) { this.position.x = width; this.angle = PI - this.angle; }
+    if (this.position.y < 0) { this.position.y = 0; this.angle = -this.angle; }
+    if (this.position.y > height) { this.position.y = height; this.angle = -this.angle; }
+
+  }
+
+  set_angle(){
     let sensorLeft = p5.Vector.fromAngle(this.angle - SENSOR_ANGLE).setMag(SENSOR_DISTANCE).add(this.position);
     let sensorCenter = p5.Vector.fromAngle(this.angle).setMag(SENSOR_DISTANCE).add(this.position);
     let sensorRight = p5.Vector.fromAngle(this.angle + SENSOR_ANGLE).setMag(SENSOR_DISTANCE).add(this.position);
     let leftVal = this.sense(sensorLeft);
     let centerVal = this.sense(sensorCenter);
     let rightVal = this.sense(sensorRight);
+
     if (centerVal > leftVal && centerVal > rightVal) {
     } else if (leftVal > rightVal) {
       this.angle -= TURN_ANGLE;
@@ -21,25 +52,9 @@ class Agent {
     } else {
       this.angle += random(-TURN_ANGLE, TURN_ANGLE);
     }
-    let oldPos = this.position.copy();
-    let velocity = p5.Vector.fromAngle(this.angle).mult(STEP_SIZE);
-    let newPos = p5.Vector.add(this.position, velocity);
-    if (newPos.x < 0) { newPos.x = 0; this.angle = PI - this.angle; }
-    if (newPos.x > width) { newPos.x = width; this.angle = PI - this.angle; }
-    if (newPos.y < 0) { newPos.y = 0; this.angle = -this.angle; }
-    if (newPos.y > height) { newPos.y = height; this.angle = -this.angle; }
-    this.position = newPos;
-    this.path.push(this.position.copy());
-    this.length += p5.Vector.dist(oldPos, this.position);
-    foodLayer.noStroke();
-    foodLayer.fill(255, 50);
-    foodLayer.ellipse(this.position.x, this.position.y, 2, 2);
   }
-  sense(pos) {
-    let c = foodLayer.get(floor(pos.x), floor(pos.y));
-    return c[0];
-  }
-  checkEmitters() {
+
+  check() {
     for (let emitter of emitters) {
       if (emitter !== this.assignedEmitter) {
         let d = p5.Vector.dist(this.position, emitter.position);
@@ -53,6 +68,7 @@ class Agent {
       }
     }
   }
+
   updateJourney(newEmitter) {
     let existing = null;
     for (let conn of journeys) {
@@ -74,28 +90,17 @@ class Agent {
       }
     }
   }
+
   draw() {
-      fill(255);
-      noStroke();
-      ellipse(this.position.x, this.position.y, 2, 2);
+    fill(255);
+    noStroke();
+    ellipse(this.position.x, this.position.y, 2, 2);
   }
 }
 
-
-const SNAP_DISTANCE = 10; // maximum distance (in pixels) for an agent to be snapped to a journey
-
-function getSnappedPoint(pos) {
-  let bestDist = SNAP_DISTANCE;
-  let bestPoint = null;
-  // Iterate through each journey and each point along its path
-  for (let conn of filtered_journeys) {
-    for (let p of conn.path) {
-      let d = p5.Vector.dist(pos, p);
-      if (d < bestDist) {
-        bestDist = d;
-        bestPoint = p;
-      }
-    }
-  }
-  return bestPoint;
+function deposit_food(position, radius) {
+  foodLayer.noStroke();
+  foodLayer.fill(255, 50);
+  foodLayer.ellipse(position.x, position.y, radius);
 }
+

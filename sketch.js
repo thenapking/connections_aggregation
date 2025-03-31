@@ -3,6 +3,8 @@ let emitters = [];
 let attractors = [];
 let journeys = [];
 let filtered_journeys = [];
+let median_journey_count = 0;
+let top_journey_count = 0;  
 let foodLayer;
 
 const SENSOR_ANGLE = Math.PI / 6;
@@ -13,22 +15,29 @@ const EMITTER_ASSIGN_DISTANCE = 20;
 
 const PATH_DETAIL = 80;
 const MIN_JOURNEYS_TO_DRAW = 10;
+const MIN_HOTSPOT_DISTANCE = 40; 
+const MIN_STROKE = 1;
+const MAX_STROKE = 50;
+const MIN_CHAIN_COUNT = 4;  
+const MAX_CHAIN_COUNT = 50; 
+
 
 const CSW = 8;
 
 const NUM_AGENTS = 50;
-const NUM_EMITTERS = 20;
-const NUM_ATTRACTORS = 500
+const NUM_EMITTERS = 80;
+const NUM_ATTRACTORS = 1500
 
 const CELL_SIZE = 20;
 
 let show_agents = true
 
 let hotspots = [];
-let flowLines = [];
+let connections = [];
+let chains = [];  
 
 function setup() {
-  createCanvas(800, 600);
+  createCanvas(1200, 1200);
 
   foodLayer = createGraphics(width, height);
   foodLayer.background(0);
@@ -57,10 +66,9 @@ function draw() {
 
   draw_journeys();
   draw_hotspots();
-  draw_flowlines();
+  // draw_connections();
+  draw_chains();
   draw_agents();
-
-
 }
 
 function keyPressed() {
@@ -78,7 +86,7 @@ function keyPressed() {
 function draw_agents() {
   for (let agent of agents) {
     agent.update();
-    agent.checkEmitters();
+    agent.check();
     if(show_agents){
       agent.draw();
     } 
@@ -88,8 +96,8 @@ function draw_agents() {
 function draw_journeys() {
   if(hotspots.length > 0) return;
   
-  for (let conn of filtered_journeys) {
-    conn.draw();
+  for (let journey of filtered_journeys) {
+    journey.draw();
   }
 }
 
@@ -105,19 +113,13 @@ function draw_emitters() {
   }
 }
 
-function draw_flowlines(){
-  if (flowLines.length > 0) {
-    stroke(255, 192, 0);
-    strokeWeight(CSW);
-    for (let l of flowLines) {
-      let geom = l.geometry;
-      line(geom[0].x, geom[0].y, geom[1].x, geom[1].y);
-    }
+function draw_connections(){
+  for (let connection of connections) {
+    connection.draw()
   }
 }
 
 function draw_attractors() {
-
   for (let attractor of attractors) {
     attractor.discharge();
     attractor.draw();
