@@ -21,11 +21,26 @@ class Group {
     this.minDistance = options.minDistance || int(random(30, 60));
     this.maxDistance = options.maxDistance || int(random(100, 300))
     this.minAgentDistance = options.minAgentDistance || int(this.minDistance / random([1, 2, 3, 4]));
+    
     this.childN = options.childN || 1;
     this.childTheta = options.childTheta || PI / 6;
     this.childRadius = options.childRadius || random([5,7]);
+    this.childoptions = {
+      enable_separation: options.enableSeparation,
+      enable_alignment: options.enableAlignment,
+      enable_obstacles: options.enableObstacles
+    }
 
     this.separate = options.separate || true;
+
+    this.show_branches = options.showBranches || true;
+    this.show_agents = options.showAgents || true;
+
+    this.terminate_branches_early = options.terminateBranchesEarly || false;
+    this.eccentricity = options.eccentricity;
+
+    
+
     this.initialize(this.position, options);
     console.log(this);
     this.export();
@@ -40,18 +55,20 @@ class Group {
     let rootRadius = options.rootRadius || int(random(5, 10));
     let rootN = options.rootN || 48;
 
-    let root = new Agent(position, direction, rootTheta, rootRadius, rootN, this, 0);
-
-    if(this.checkBounds(root.position)){
+    if(this.checkBounds(position)){
+      let root = new Agent(position, direction, rootTheta, rootRadius, rootN, this, 0, this.childoptions);
       this.agents.push(root);
       let newbranches = root.spawn();
       this.branches.push(...newbranches);
     } else {
       console.log("Root agent out of bounds");
+      return;
     }
 
-
-    let obstacle = new Obstacle(this.position, rootRadius * 2);
+    let obstacle_size = options.obstacleSize || options.rootRadius * 2;
+    obstacle_size = constrain(obstacle_size, rootRadius, this.maxDistance);
+    console.log(obstacle_size, options.obstacle_size, options.rootRadius, this.maxDistance)
+    let obstacle = new Obstacle(this.position, obstacle_size);
     obstacles.push(obstacle);
   }
 
@@ -83,6 +100,8 @@ class Group {
   }
 
   deposit(){
+    if(this.childoptions.enable_obstacles){ return }
+
     for(let agent of this.agents){
       agent.deposit();
     }
@@ -98,8 +117,8 @@ class Group {
       childProps.radius,
       childProps.n, 
       this,
-      branch.parent.depth + 1
-      
+      branch.parent.depth + 1,
+      childProps.options,
     );
     
     childAgent.direction = branch.angle;
@@ -116,46 +135,54 @@ class Group {
 
   draw() {
     push();
-    stroke(palette.colours[this.fillColorIndex]);
 
-    for (let branch of this.branches) {
-      let start = branch.parent.position;
-      let end = branch.getEndPoint();
-      this.draw_branch(start, end);
+    if(this.show_branches){
+      for (let branch of this.branches) {
+        let start = branch.parent.position;
+        let end = branch.getEndPoint();
+        this.draw_branch(start, end);
+      }
+
+      for (let agent of this.agents) {
+        for (let child of agent.children) {
+          this.draw_branch(agent.position, child.position, agent.depth % 2);
+        }
+      }
     }
 
-    for (let agent of this.agents) {
-      for (let child of agent.children) {
-        this.draw_branch(agent.position, child.position, agent.depth % 2);
+    if(this.show_agents){
+      for (let agent of this.agents) {
+        agent.draw();
       }
-      agent.draw();
-
     }
     pop();
   }
 
-  // move this and the agent draw functions to a separate file
-  // create draw in branch
-  // optionally draw branches
-  draw_branch(start, end, orientation = 0){
+  draw_branch(start, end){
     push()
-    stroke(palette.colours[this.fillColorIndex]);
-    noFill();
-    if (this.lineStyle === "curved") {
-      let top = p5.Vector.lerp(start, end, 0.33);
-      let bot = p5.Vector.lerp(start, end, 0.66);
+      stroke(palette.colours[this.fillColorIndex]);
+      noFill();
 
-      let offset = p5.Vector.sub(end, start).mult(0.45);
-      
-      offset.rotate(HALF_PI);
-      top.add(offset);
-      bot.sub(offset);
+      if (this.lineStyle === "curved") {
+        this.draw_curved_branch(start, end);
+      } else {
+        line(start.x, start.y, end.x, end.y);
+      }
 
-      bezier(start.x, start.y, top.x, top.y, bot.x, bot.y, end.x, end.y);
-    } else {
-      line(start.x, start.y, end.x, end.y);
-    }
     pop();
+  }
+
+  draw_curved_branch(start, end){
+    let top = p5.Vector.lerp(start, end, 0.33);
+    let bot = p5.Vector.lerp(start, end, 0.66);
+
+    let offset = p5.Vector.sub(end, start).mult(0.45);
+    
+    offset.rotate(HALF_PI);
+    top.add(offset);
+    bot.sub(offset);
+
+    bezier(start.x, start.y, top.x, top.y, bot.x, bot.y, end.x, end.y);
   }
 
   
@@ -296,7 +323,7 @@ class Group {
   }
 
   getChildAgentProperties(parent) {
-    return { theta: this.childTheta, radius: this.childRadius, n: this.childN };
+    return { theta: this.childTheta, radius: this.childRadius, n: this.childN, options: this.childoptions };
   }
 
   export(){
@@ -313,6 +340,7 @@ class Group {
       rootN: root.n,
       rootRadius: root.radius,
       rootTheta: root.theta,
+      
     }
 
     console.log(data)

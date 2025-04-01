@@ -1,6 +1,6 @@
 /* agent.js */
 class Agent {
-  constructor(position, direction, theta, radius, n, group, depth = 0) {
+  constructor(position, direction, theta, radius, n, group, depth = 0, options) {
     this.position = position.copy();
     this.direction = direction; // an angle in radians, not a vector
     this.theta = theta;         
@@ -8,7 +8,19 @@ class Agent {
     this.depth = depth;         
     this.n = n; 
     this.children = [];   
-    this.group = group;     
+    this.group = group;
+    this.enable_separation = options.enable_separation || false;
+    this.enable_alignment = options.enable_alignment   || false;
+    this.enable_obstacles = options.enable_obstacles   || false;
+
+    this.initialize();
+  }
+
+  initialize(){
+    if(this.enable_obstacles){
+      let obstacle = new Obstacle(this.position, this.radius);
+      obstacles.push(obstacle);
+    }
   }
 
   spawn() {
@@ -28,6 +40,8 @@ class Agent {
   }
 
   deposit() {
+    if(this.enable_obstacles){ return }
+    
     deposit_food(this.position, this.radius);
   }
 
