@@ -31,12 +31,12 @@ class Group {
       enable_obstacles: options.enableObstacles
     }
 
-    this.separate = options.separate || true;
+    this.separate = options.separate;
 
-    this.show_branches = options.showBranches || true;
-    this.show_agents = options.showAgents || true;
+    this.show_branches = options.showBranches;
+    this.show_agents = options.showAgents;
 
-    this.terminate_branches_early = options.terminateBranchesEarly || false;
+    this.terminate_branches_early = options.terminateBranchesEarly;
     this.eccentricity = options.eccentricity;
 
     
@@ -65,7 +65,7 @@ class Group {
       return;
     }
 
-    let obstacle_size = options.obstacleSize || options.rootRadius * 2;
+    let obstacle_size = options.obstacleSize || options.rootRadius;
     obstacle_size = constrain(obstacle_size, rootRadius, this.maxDistance);
     console.log(obstacle_size, options.obstacle_size, options.rootRadius, this.maxDistance)
     let obstacle = new Obstacle(this.position, obstacle_size);

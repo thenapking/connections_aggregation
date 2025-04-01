@@ -28,7 +28,7 @@ const EMITTER_ASSIGN_DISTANCE = 20;
 
 const EMITTER_MARGIN = 30;
 const OBSTACLE_MARGIN = 30; // distance between obstacles
-const OBSTACLE_SPACING = 20; // distance between hotspots and obstacles
+const OBSTACLE_SPACING = 10; // distance between hotspots and obstacles
 
 const PATH_DETAIL = 80;
 const MIN_JOURNEYS_TO_DRAW = 10;
@@ -48,7 +48,7 @@ const NUM_OBSTACLES = 100;
 
 const CELL_SIZE = 20;
 
-let show_slimeagents = true
+let show_slime = true
 let show_emitters = false;
 
 let enable_slimeagents = true
@@ -119,7 +119,7 @@ function update_slimeagents(){
 
 function draw_slimeagents() {
   for (let slimeagent of slimeagents) {
-    if(show_slimeagents){
+    if(show_slime){
       slimeagent.draw();
     } 
   }
@@ -199,6 +199,7 @@ function add_food(){
 
 function mousePressed() {
   let position = createVector(mouseX - bw, mouseY - bw)
+  console.log(groupSettings)
   let group = new Group(position, 
     groupSettings.fillColorIndex,
     groupSettings.strokeColorIndex,
@@ -229,7 +230,7 @@ function keyPressed() {
   }
 
   if( key === 'a'){
-    show_slimeagents = !show_slimeagents
+    show_slime = !show_slime
   }
   
 }

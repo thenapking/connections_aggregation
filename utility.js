@@ -48,7 +48,7 @@ function setup_gui(){
   
   gui.add(groupSettings, "showAgents").name("Show Agents");
   gui.add(groupSettings, "showBranches").name("Show Branches");
-  gui.add(groupSettings, "terminateBranchesEarly").name("Terminate Branches Early");
+  gui.add(groupSettings, "terminateBranchesEarly").name("Terminate");
 
   gui.add(groupSettings, "separate").name("Separate");
   gui.add(groupSettings, "direction", 0, TWO_PI, 0.1).name("Direction");
@@ -94,6 +94,10 @@ function setup_gui(){
         groups.splice(groups.length - 1, 1);
       } 
     },
+
+    showSlime: function() {
+      show_slime = !show_slime;
+    },
     pauseSlime: function() {
       enable_slimeagents = !enable_slimeagents;
     },
@@ -104,11 +108,15 @@ function setup_gui(){
       if(slimeagents.length > 0){ return; }
       create_slimeagents();
     },
+
     pause: function() {
       running = !running;
       if (running) {
         loop();
       }
+    },
+    debug: function() {
+      debug = !debug;
     }
 
   };
@@ -116,9 +124,11 @@ function setup_gui(){
   
   gui.add(guiControls, "removeLastGroup").name("Remove Last Group");
   gui.add(guiControls, "pauseSlime").name("Pause Slime");
+  gui.add(guiControls, "showSlime").name("Show Slime");
   gui.add(guiControls, "removeSlime").name("Remove Slime");
   gui.add(guiControls, "addSlime").name("Add Slime");
   gui.add(guiControls, "pause").name("Pause");
+  gui.add(guiControls, "debug").name("Debug");
  
   
 }

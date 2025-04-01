@@ -9,9 +9,9 @@ class Agent {
     this.n = n; 
     this.children = [];   
     this.group = group;
-    this.enable_separation = options.enable_separation || false;
-    this.enable_alignment = options.enable_alignment   || false;
-    this.enable_obstacles = options.enable_obstacles   || false;
+    this.enable_separation = options.enable_separation;
+    this.enable_alignment = options.enable_alignment;
+    this.enable_obstacles = options.enable_obstacles;
 
     this.initialize();
   }

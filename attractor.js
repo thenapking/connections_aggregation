@@ -13,7 +13,7 @@ class Attractor {
     let colour_idx = palette.groups[0]
     fill(palette.colours[colour_idx]);
     noStroke();
-    ellipse(this.position.x, this.position.y, this.radius, this.radius);
+    ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2);
   }
 }
 
