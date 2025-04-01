@@ -17,8 +17,19 @@ class Grid {
     this.resulting_groups = [];
   }
 
+  pointInsideObstacle(pt) {
+    for (let obstacle of obstacles) {
+      if (p5.Vector.dist(pt, obstacle.position) < obstacle.radius + OBSTACLE_SPACING) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   insert(points) {
     for (let pt of points) {
+      if (this.pointInsideObstacle(pt)) continue;
+
       let c = this.closest_centroid(pt, this.cell_size);
       
       if (!c) {

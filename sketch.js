@@ -27,7 +27,8 @@ const STEP_SIZE = 1.5;
 const EMITTER_ASSIGN_DISTANCE = 20;
 
 const EMITTER_MARGIN = 30;
-const OBSTACLE_MARGIN = 30;
+const OBSTACLE_MARGIN = 30; // distance between obstacles
+const OBSTACLE_SPACING = 20; // distance between hotspots and obstacles
 
 const PATH_DETAIL = 80;
 const MIN_JOURNEYS_TO_DRAW = 10;
@@ -48,35 +49,44 @@ const NUM_OBSTACLES = 100;
 const CELL_SIZE = 20;
 
 let show_slimeagents = true
+let show_emitters = false;
+
+let enable_slimeagents = true
+
 let exporting = false;
-
-
+let running = true
+let debug = true;
 
 function setup() {
   createCanvas(w + 2*bw, h + 2*bw);
-
-
-  foodLayer = createGraphics(w + 2*bw, h + 2*bw);
-  foodLayer.background(0);
+  create_food();
 
   setup_gui();
 
-
   create_emitters(w, h);
   create_slimeagents();
-  
 }
 
 function draw() {
-  add_food();
+  if(!running) { noLoop(); }
   if(exporting){ beginRecordSVG(this, 'flower_agents.svg') }
+
+  update_slimeagents();
+
 
   background(palette.background);
   translate(bw, bw);
+
+  push();
+    draw_emitters();
+    draw_obstacles();
+    draw_attractors();
+  pop();
   
   draw_groups(palette.depth[0]);
   draw_groups(palette.depth[1]);
 
+  
   push();
     draw_journeys();
     draw_hotspots();
@@ -96,11 +106,19 @@ function draw() {
   }
 }
 
+function update_slimeagents(){
+  if(!enable_slimeagents) return;
+  add_food();
 
-function draw_slimeagents() {
   for (let slimeagent of slimeagents) {
     slimeagent.update();
     slimeagent.check();
+  }
+}
+
+
+function draw_slimeagents() {
+  for (let slimeagent of slimeagents) {
     if(show_slimeagents){
       slimeagent.draw();
     } 
@@ -122,6 +140,8 @@ function draw_hotspots() {
 }
 
 function draw_emitters() {
+  if(!show_emitters) return;
+
   for (let emitter of emitters) {
     emitter.draw();
   }
@@ -134,22 +154,46 @@ function draw_connections(){
 }
 
 function draw_attractors() {
+  if(!debug) { return; }
+
   for (let attractor of attractors) {
-    attractor.discharge();
     attractor.draw();
   }
 }
 
 function draw_obstacles() {
+  if(!debug) { return; }
+
   for (let obstacle of obstacles) {
     obstacle.draw();
   }
+}
+
+function create_food(){
+  foodLayer = createGraphics(w + 2*bw, h + 2*bw);
+  foodLayer.background(0);
+}
+
+function delete_slimeagents(){
+  slimeagents = [];
+  hotspots = [];
+  connections = [];
+  journeys = [];
+  filtered_journeys = [];
+  chains = [];
+  foodLayer.clear();
+  foodLayer.background(0);
+
 }
 
 function add_food(){
   foodLayer.fill(0, 20);
   foodLayer.noStroke();
   foodLayer.rect(0, 0, width, height);
+
+  for (let attractor of attractors) {
+    attractor.discharge();
+  }
 }
 
 
