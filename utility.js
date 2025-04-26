@@ -16,8 +16,9 @@ const groupSettings = {
   minDistance: 30,
   maxDistance: 150,
   minAgentDistance: 20,
+  minAgentSize: 4,
+  maxAgentSize: 20,
 
-  noiseThreshold: 1,
   noiseScale: 0.01,
 
   rootN: 48,
@@ -28,7 +29,9 @@ const groupSettings = {
   childN: 1,
   childTheta: Math.PI / 6,
   childRadius: 5,
+
   enableSeparation: false,
+  enableResize: false,
   enableAlignment: false,
   enableObstacles: false
 
@@ -57,8 +60,9 @@ function setup_gui(){
   gui.add(groupSettings, "minDistance",  0, 100, 1).name("Connection Min Dist");
   gui.add(groupSettings, "maxDistance", 50, 400, 1).name("Connection Max Dist");
   gui.add(groupSettings, "minAgentDistance", 0, 100, 1).name("Agent Min Dist");
+  gui.add(groupSettings, "minAgentSize", 0, 100, 1).name("Agent Min Size");
+  gui.add(groupSettings, "maxAgentSize", 0, 100, 1).name("Agent Min Size");
 
-  gui.add(groupSettings, "noiseThreshold", 0, 1, 0.01).name("Noise Threshold");
   gui.add(groupSettings, "noiseScale", 0.001, 0.05, 0.001).name("Noise Scale");
 
   gui.add(groupSettings, "rootN", 1, 100, 1).name("Root Connections");
@@ -71,6 +75,7 @@ function setup_gui(){
   gui.add(groupSettings, "childRadius", 2, 20, 1).name("Child Size");
 
   gui.add(groupSettings, "enableSeparation").name("Enable Separation");
+  gui.add(groupSettings, "enableResize").name("Enable Resize");
   gui.add(groupSettings, "enableAlignment").name("Enable Alignment");
   gui.add(groupSettings, "enableObstacles").name("Enable Obstacles");
 
@@ -85,7 +90,6 @@ function setup_gui(){
      }
      updateGUIControllers();
   });
-  
 
   const guiControls = {
     removeLastGroup: function() {
@@ -94,7 +98,6 @@ function setup_gui(){
         groups.splice(groups.length - 1, 1);
       } 
     },
-
     showSlime: function() {
       show_slime = !show_slime;
     },
@@ -108,7 +111,6 @@ function setup_gui(){
       if(slimeagents.length > 0){ return; }
       create_slimeagents();
     },
-
     pause: function() {
       running = !running;
       if (running) {
@@ -118,10 +120,8 @@ function setup_gui(){
     debug: function() {
       debug = !debug;
     }
-
   };
 
-  
   gui.add(guiControls, "removeLastGroup").name("Remove Last Group");
   gui.add(guiControls, "pauseSlime").name("Pause Slime");
   gui.add(guiControls, "showSlime").name("Show Slime");
@@ -129,8 +129,6 @@ function setup_gui(){
   gui.add(guiControls, "addSlime").name("Add Slime");
   gui.add(guiControls, "pause").name("Pause");
   gui.add(guiControls, "debug").name("Debug");
- 
-  
 }
 
 function updateGUIControllers() {

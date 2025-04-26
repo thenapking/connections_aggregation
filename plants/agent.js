@@ -2,6 +2,9 @@
 class Agent {
   constructor(position, direction, theta, radius, n, group, depth = 0, options) {
     this.position = position.copy();
+    this.acceleration = createVector(0, 0);
+    this.velocity = createVector(0, 0);
+
     this.direction = direction; // an angle in radians, not a vector
     this.theta = theta;         
     this.radius = radius;      
@@ -10,10 +13,17 @@ class Agent {
     this.children = [];   
     this.group = group;
     this.enable_separation = options.enable_separation;
+    this.enable_resize = options.enable_resize;
+
     this.enable_alignment = options.enable_alignment;
     this.enable_obstacles = options.enable_obstacles;
-
+    this.noiseScale = options.noiseScale;
+    this.minSize = options.minAgentSize;
+    this.maxSize = options.maxAgentSize;
+    this.maxForce = 0.25;
+    this.maxSpeed = 2;
     this.initialize();
+    this.active = true;
   }
 
   initialize(){
@@ -21,7 +31,63 @@ class Agent {
       let obstacle = new Obstacle(this.position, this.radius);
       obstacles.push(obstacle);
     }
+    this.resize();
   }
+
+  applyForce(force, m = 1) {
+    force.mult(m);
+    this.acceleration.add(force);
+  }
+  
+  update() {
+    this.velocity.add(this.acceleration);
+    this.velocity.limit(this.maxSpeed);
+    this.position.add(this.velocity);
+    this.acceleration.mult(0);
+    this.velocity.mult(0.95);
+    if (this.velocity.mag() < 0.001) {
+      this.active = false;
+      this.velocity.mult(0);
+    }
+  }
+
+  resize() {
+    if(!this.enable_resize){ return }
+
+    let nz = noise(this.position.x * this.noiseScale, this.position.y * this.noiseScale);
+    this.radius = lerp(this.minSize, this.maxSize, nz);
+  }
+
+  separation(agents) {
+    if(!this.enable_separation){ return createVector(0, 0) }
+
+    let steer = createVector(0, 0);
+    let count = 0;
+    for (let other of agents) {
+      if (other !== this) {
+        let d = p5.Vector.dist(this.position, other.position);
+        if (d < this.radius + other.radius + 0.01) { 
+          let diff = p5.Vector.sub(this.position, other.position);
+          diff.normalize();
+          diff.div(d);
+          steer.add(diff);
+          count++;
+        }
+      }
+    }
+    if (count > 0) {
+      steer.div(count);
+      steer.setMag(this.maxSpeed);
+      steer.sub(this.velocity);
+      steer.limit(this.maxForce);
+      return steer;
+    } else {
+      let stop = this.velocity.copy().mult(-1);
+      stop.limit(this.maxForce);
+      return stop;
+    }
+  }
+
 
   spawn() {
     let branches = [];

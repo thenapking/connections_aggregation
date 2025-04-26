@@ -64,7 +64,6 @@ function setup() {
   setup_gui();
 
   create_emitters(w, h);
-  create_slimeagents();
 }
 
 function draw() {

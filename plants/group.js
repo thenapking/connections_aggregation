@@ -13,14 +13,20 @@ class Group {
 
     this.lineStyle = options.lineStyle || "straight";
 
-    this.noiseThreshold = options.noiseThreshold || 1.00;
-    this.noiseScale = options.noiseScale || 0.01;
     this.bounds = options.bounds || { x: 0, y: 0, w: w, h: h };
     this.position = position.copy();
     
     this.minDistance = options.minDistance || int(random(30, 60));
     this.maxDistance = options.maxDistance || int(random(100, 300))
     this.minAgentDistance = options.minAgentDistance || int(this.minDistance / random([1, 2, 3, 4]));
+    this.minAgentSize = options.minAgentSize;
+    this.maxAgentSize = options.maxAgentSize;
+    this.noiseScale = options.noiseScale;
+
+    this.enableSeparation = options.enableSeparation;
+    this.enableAlignment = options.enableAlignment;
+    this.enableResize = options.enableResize;
+
     
     this.childN = options.childN || 1;
     this.childTheta = options.childTheta || PI / 6;
@@ -28,7 +34,11 @@ class Group {
     this.childoptions = {
       enable_separation: options.enableSeparation,
       enable_alignment: options.enableAlignment,
-      enable_obstacles: options.enableObstacles
+      enable_obstacles: options.enableObstacles,
+      enable_resize: options.enableResize,
+      noiseScale: options.noiseScale,
+      minAgentSize: options.minAgentSize,
+      maxAgentSize: options.maxAgentSize
     }
 
     this.separate = options.separate;
@@ -44,6 +54,8 @@ class Group {
     this.initialize(this.position, options);
     console.log(this);
     this.export();
+
+    this.active = true;
 
   }
 
@@ -70,6 +82,15 @@ class Group {
     console.log(obstacle_size, options.obstacle_size, options.rootRadius, this.maxDistance)
     let obstacle = new Obstacle(this.position, obstacle_size);
     obstacles.push(obstacle);
+
+    if(this.enableSeparation || this.enableResize){
+      for(let i=0; i<100; i++){
+        let x = position.x + random(-10, 10);
+        let y = position.y + random(-10, 10);
+        let agent = new Agent(createVector(x,y), direction, rootTheta, rootRadius, rootN, this, 0, this.childoptions);
+        this.agents.push(agent);
+      }
+    }
   }
 
   findColourGroup(){
@@ -81,6 +102,11 @@ class Group {
   }
 
   update() {
+    this.update_agents();
+    this.update_branches();
+  }
+
+  update_branches(){
     for (let i = this.branches.length - 1; i >= 0; i--) {
       let branch = this.branches[i];
       branch.update();
@@ -93,10 +119,25 @@ class Group {
           continue;
         }
       }
+
       if (branch.currentLength > branch.maxDistance) {
         this.branches.splice(i, 1);
       }
     }
+  }
+
+  update_agents(){
+    // if(!this.active) { return; }
+    let count = 0;
+    for (let agent of this.agents) {
+      agent.resize();
+
+      let sep = agent.separation(this.agents);
+      agent.applyForce(sep, 2);
+      agent.update();
+      if(agent.active) { count++; }
+    }
+    // if(count === 0) { this.active = false; }
   }
 
   deposit(){
@@ -189,21 +230,22 @@ class Group {
 
   canPlaceAgent(position, parent) {
     if(!this.checkBounds(position)) { return false; }
+    if(this.agents.length > 200) { return false; }
 
-    let noiseVal = noise(position.x * this.noiseScale, position.y * this.noiseScale);
-    if (noiseVal > this.noiseThreshold) {
-      return false;
-    }
-
+    if(!this.enableSeparation){
     let dist = p5.Vector.dist(this.position, position);
     if (dist < this.minDistance || dist > this.maxDistance) {
+      console.log("Too close to center or too far")
       return false;
     }
 
-    for (let agent of this.agents) {
-      let dist = p5.Vector.dist(position, agent.position);
-      if (dist < this.minAgentDistance || dist < agent.radius * 1.25) {
-        return false;
+    
+      for (let agent of this.agents) {
+        let dist = p5.Vector.dist(position, agent.position);
+        if (dist < this.minAgentDistance || dist < agent.radius * 1.25) {
+          console.log("Too close to another agent")
+          return false;
+        }
       }
     }
 
