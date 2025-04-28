@@ -235,7 +235,7 @@ class Group {
     if(!this.enableSeparation){
     let dist = p5.Vector.dist(this.position, position);
     if (dist < this.minDistance || dist > this.maxDistance) {
-      console.log("Too close to center or too far")
+      if(debug) console.log("Too close to center or too far")
       return false;
     }
 
@@ -243,7 +243,7 @@ class Group {
       for (let agent of this.agents) {
         let dist = p5.Vector.dist(position, agent.position);
         if (dist < this.minAgentDistance || dist < agent.radius * 1.25) {
-          console.log("Too close to another agent")
+          if(debug) console.log("Too close to another agent")
           return false;
         }
       }

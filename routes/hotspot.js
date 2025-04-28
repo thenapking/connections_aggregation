@@ -22,11 +22,11 @@ class Hotspot {
     }
     this.centroid = createVector(sumX / this.points.length, sumY / this.points.length);
   }
-
+s
   draw(){
     if(this.centroid === undefined) { return }
     noStroke();
-    fill(palette.white);
+    fill(palette.route);
     let sz = this.count > 2 ? CSW*2 : CSW+2;
     ellipse(this.centroid.x, this.centroid.y, sz);
   }
@@ -293,19 +293,20 @@ function groupChains(connections, hotspots) {
 }
 
 function draw_chains() {
+  push()
   for (let chain of chains) {
-    // let sw = map(chain.count, MIN_CHAIN_COUNT, MAX_CHAIN_COUNT, MIN_STROKE, MAX_STROKE, true);
     strokeWeight(4);
     noFill();
-    stroke(palette.white);
+    stroke(palette.route);
     beginShape();
-    curveVertex(chain.points[0].x, chain.points[0].y);
-    for (let pt of chain.points) {
-      curveVertex(pt.x, pt.y);
-    }
-    curveVertex(chain.points[chain.points.length-1].x, chain.points[chain.points.length-1].y);
+      curveVertex(chain.points[0].x, chain.points[0].y);
+      for (let pt of chain.points) {
+        curveVertex(pt.x, pt.y);
+      }
+      curveVertex(chain.points[chain.points.length-1].x, chain.points[chain.points.length-1].y);
     endShape();
   }
+  pop()
 }
 
 

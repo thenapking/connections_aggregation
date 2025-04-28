@@ -15,6 +15,7 @@ let palettes = {
     background: "#E0E0E0",
     white: "#F6F1E5",
     black: "#00253F",
+    route: "#F6F1E5",
   },
   "mindful97": {
     colours: [
@@ -32,6 +33,7 @@ let palettes = {
     groups: [[0], [0,1,4], [2,3,5]],
     white: "#F1F3F3",
     black: "#102329",
+    route: "#102329",
   },
   "debug": {
     colours: [
@@ -49,6 +51,7 @@ let palettes = {
     groups: [[4], [0,1,4], [2,3,5]],
     white: "#000000",
     black: "#000000",
+    route: "#000000",
   },
 
 };

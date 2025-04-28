@@ -98,6 +98,9 @@ function setup_gui(){
         groups.splice(groups.length - 1, 1);
       } 
     },
+    generateRoutes: function() {
+      generateHotspotsAndFlow();
+    },
     showSlime: function() {
       show_slime = !show_slime;
     },
@@ -123,6 +126,7 @@ function setup_gui(){
   };
 
   gui.add(guiControls, "removeLastGroup").name("Remove Last Group");
+  gui.add(guiControls, "generateRoutes").name("Generate Routes");
   gui.add(guiControls, "pauseSlime").name("Pause Slime");
   gui.add(guiControls, "showSlime").name("Show Slime");
   gui.add(guiControls, "removeSlime").name("Remove Slime");

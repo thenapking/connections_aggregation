@@ -1,6 +1,6 @@
 const DPI = 96
-let w = 12 * DPI;
-let h = 16 * DPI;
+let w = 6 * DPI;
+let h = 8 * DPI;
 let bw = 1 * DPI;
 
 
@@ -32,7 +32,7 @@ const OBSTACLE_SPACING = 10; // distance between hotspots and obstacles
 
 const PATH_DETAIL = 80;
 const MIN_JOURNEYS_TO_DRAW = 10;
-const MIN_HOTSPOT_DISTANCE = 40; 
+const MIN_HOTSPOT_DISTANCE = DPI/2; 
 const MIN_STROKE = 1;
 const MAX_STROKE = 50;
 const MIN_CHAIN_COUNT = 4;  
@@ -55,7 +55,7 @@ let enable_slimeagents = true
 
 let exporting = false;
 let running = true
-let debug = true;
+let debug = false;
 
 function setup() {
   createCanvas(w + 2*bw, h + 2*bw);
