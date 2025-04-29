@@ -20,7 +20,7 @@ class SlimeAgent {
 
     this.length += p5.Vector.dist(previous, this.position);
 
-    deposit_food(this.position, 2);
+    deposit_food(this.position, 2/u);
   }
 
   sense(pos) {
@@ -60,7 +60,7 @@ class SlimeAgent {
     for (let emitter of emitters) {
       if (emitter !== this.assignedEmitter) {
         let d = p5.Vector.dist(this.position, emitter.position);
-        if (d < EMITTER_ASSIGN_DISTANCE) {
+        if (d < emitter.radius + EMITTER_ASSIGN_DISTANCE) {
           this.updateJourney(emitter);
           this.assignedEmitter = emitter;
           this.path = [this.position.copy()];
@@ -75,7 +75,11 @@ class SlimeAgent {
     let adjustment = 0;
     let count = 0;
     let margin = 10; // safety margin
-    for (let obs of obstacles) {
+    let i = floor(this.position.x / CELL_SIZE);
+    let j = floor(this.position.y / CELL_SIZE);
+    let neighbours = obstacles_grid.neighbours(i, j);
+    
+    for (let obs of neighbours) {
       let d = p5.Vector.dist(this.position, obs.position);
       if (d < obs.radius + margin) {
         let desiredAngle = atan2(this.position.y - obs.position.y, this.position.x - obs.position.x);
@@ -119,7 +123,7 @@ class SlimeAgent {
   draw() {
     fill(255);
     noStroke();
-    ellipse(this.position.x, this.position.y, 2, 2);
+    ellipse(this.position.x, this.position.y, 4, 4);
   }
 }
 

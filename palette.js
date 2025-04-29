@@ -33,7 +33,7 @@ let palettes = {
     groups: [[0], [0,1,4], [2,3,5]],
     white: "#F1F3F3",
     black: "#102329",
-    route: "#102329",
+    route: "#F1F3F3",
   },
   "debug": {
     colours: [

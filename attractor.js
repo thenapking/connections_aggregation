@@ -1,7 +1,7 @@
 class Attractor {
-  constructor(x, y) {
+  constructor(x, y, radius) {
     this.position = createVector(x, y);
-    this.radius = 10;
+    this.radius = radius || 10;
   }
 
   discharge() {

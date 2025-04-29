@@ -16,21 +16,32 @@ class Group {
     this.bounds = options.bounds || { x: 0, y: 0, w: w, h: h };
     this.position = position.copy();
     
-    this.minDistance = options.minDistance || int(random(30, 60));
+    this.minDistance = options.minDistance || int(random(30, 60))
     this.maxDistance = options.maxDistance || int(random(100, 300))
     this.minAgentDistance = options.minAgentDistance || int(this.minDistance / random([1, 2, 3, 4]));
     this.minAgentSize = options.minAgentSize;
     this.maxAgentSize = options.maxAgentSize;
+
     this.noiseScale = options.noiseScale;
 
     this.enableSeparation = options.enableSeparation;
     this.enableAlignment = options.enableAlignment;
     this.enableResize = options.enableResize;
+    this.enableObstacles = !options.enableObstacles;
+    
+    this.minAgentDistance /= u;
+    this.minDistance /= u;
+    this.maxDistance /= u;
+    this.minAgentSize /= u;
+    this.maxAgentSize /= u;
 
     
     this.childN = options.childN || 1;
     this.childTheta = options.childTheta || PI / 6;
     this.childRadius = options.childRadius || random([5,7]);
+
+    this.childRadius /= u;
+
     this.childoptions = {
       enable_separation: options.enableSeparation,
       enable_alignment: options.enableAlignment,
@@ -43,20 +54,20 @@ class Group {
 
     this.separate = options.separate;
 
-    this.show_branches = options.showBranches;
+    this.show_branches = false; // options.showBranches;
     this.show_agents = options.showAgents;
 
     this.terminate_branches_early = options.terminateBranchesEarly;
     this.eccentricity = options.eccentricity;
 
     
+    this.grid = new Grid();
 
     this.initialize(this.position, options);
     console.log(this);
     this.export();
 
     this.active = true;
-
   }
 
   
@@ -65,6 +76,7 @@ class Group {
     let direction = options.direction || random(TWO_PI);
     let rootTheta = options.rootTheta || random(PI/2, TWO_PI);
     let rootRadius = options.rootRadius || int(random(5, 10));
+    rootRadius /= u;
     let rootN = options.rootN || 48;
 
     if(this.checkBounds(position)){
@@ -72,23 +84,31 @@ class Group {
       this.agents.push(root);
       let newbranches = root.spawn();
       this.branches.push(...newbranches);
+      console.log("Branches created", this.branches.length);
     } else {
       console.log("Root agent out of bounds");
       return;
     }
 
-    let obstacle_size = options.obstacleSize || options.rootRadius;
-    obstacle_size = constrain(obstacle_size, rootRadius, this.maxDistance);
-    console.log(obstacle_size, options.obstacle_size, options.rootRadius, this.maxDistance)
-    let obstacle = new Obstacle(this.position, obstacle_size);
-    obstacles.push(obstacle);
+    if(this.enableObstacles){
+      let obstacle_size = options.obstacleSize || options.rootRadius;
+      obstacle_size = constrain(obstacle_size, rootRadius, this.maxDistance);
+      console.log(obstacle_size, options.obstacle_size, options.rootRadius, this.maxDistance)
+      let obstacle = new Obstacle(this.position, obstacle_size, this);
+      obstacles.push(obstacle);
+      let attractor_size = options.obstacleSize || options.rootRadius;
+      attractor_size = constrain(attractor_size * 3, rootRadius, this.maxDistance);
+      let attractor = new Attractor(this.position.x, this.position.y, attractor_size)
+      attractors.push(attractor);
+    }
 
     if(this.enableSeparation || this.enableResize){
-      for(let i=0; i<100; i++){
+      for(let i=0; i< 500; i++){
         let x = position.x + random(-10, 10);
         let y = position.y + random(-10, 10);
         let agent = new Agent(createVector(x,y), direction, rootTheta, rootRadius, rootN, this, 0, this.childoptions);
         this.agents.push(agent);
+        this.grid.add(agent);
       }
     }
   }
@@ -129,15 +149,45 @@ class Group {
   update_agents(){
     // if(!this.active) { return; }
     let count = 0;
+    let grid = new Grid()
     for (let agent of this.agents) {
-      agent.resize();
+      if(this.enableResize) {  agent.resize(); }
+      let i = Math.floor(agent.position.x / CELL_SIZE);
+      let j = Math.floor(agent.position.y / CELL_SIZE);
+      let others = this.grid.neighbours(i, j)
+      
+      if(enable_slimeagents && hotspots && this.enableSeparation){
+        // let hotspots = hotspot_grid.neighbours(i, j);
 
-      let sep = agent.separation(this.agents);
-      agent.applyForce(sep, 2);
+        let slime_force = agent.avoid(hotspots)
+        agent.applyForce(slime_force, 1);
+
+        let emitter_force = agent.avoid(emitters);
+        agent.applyForce(emitter_force, 0.5);
+      }
+      
+      if(this.enableSeparation) {
+        let separation = agent.separation(others);
+        agent.applyForce(separation, 2);
+      }
+
       agent.update();
+
       if(agent.active) { count++; }
+      if(agent.outside) { this.remove_agent(agent) } else {
+        grid.add(agent);
+      }
     }
-    // if(count === 0) { this.active = false; }
+    this.grid = grid;
+    if(count === 0) { this.active = false; }
+  }
+
+  remove_agent(agent){
+    if(agent.obstacle){
+      if(debug) { console.log("removing obstacle", agent.obstacle); }
+      obstacles.splice(obstacles.indexOf(agent.obstacle), 1);
+    }
+    this.agents.splice(this.agents.indexOf(agent), 1);
   }
 
   deposit(){
@@ -391,15 +441,36 @@ class Group {
 
 
 
-function draw_groups(colour_index){
+function draw_groups(colour_index, update = true) {
   push();
   for (let group of groups) {
     if (group.strokeColorIndex != colour_index) { continue; }
-    group.update();
+    
+    if(update) { 
+      if(debug) { console.log("updating group", group.strokeColorIndex);   }
+      group.update(); 
+    }
     group.deposit();
     group.draw();
   }
   pop();
+}
+
+function remove_intersecting_agents(){
+  for(let group of groups){
+    for(let other of groups){
+      for(let agent of group.agents){
+        for(let other_agent of other.agents){
+          if(agent === other_agent) { continue; }
+          let dist = p5.Vector.dist(agent.position, other_agent.position);
+          if(dist < (agent.radius/2 + other_agent.radius/2 + 0.1)){
+            group.remove_agent(agent);
+            break;
+          }
+        }
+      }
+    }
+  }
 }
 
 function delete_empty_groups() {

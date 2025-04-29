@@ -24,11 +24,13 @@ class Agent {
     this.maxSpeed = 2;
     this.initialize();
     this.active = true;
+    this.outside = false;
   }
 
   initialize(){
     if(this.enable_obstacles){
-      let obstacle = new Obstacle(this.position, this.radius);
+      let obstacle = new Obstacle(this.position, this.radius, this.group, this);
+      this.obstacle = obstacle;
       obstacles.push(obstacle);
     }
     this.resize();
@@ -40,6 +42,7 @@ class Agent {
   }
   
   update() {
+    this.edges();
     this.velocity.add(this.acceleration);
     this.velocity.limit(this.maxSpeed);
     this.position.add(this.velocity);
@@ -51,11 +54,19 @@ class Agent {
     }
   }
 
+  edges(){
+    if (this.position.x < 0) { this.outside = true }
+    if (this.position.x > w) { this.outside = true  }
+    if (this.position.y < 0) { this.outside = true  }
+    if (this.position.y > h) { this.outside = true  }
+  }
+
   resize() {
     if(!this.enable_resize){ return }
 
     let nz = noise(this.position.x * this.noiseScale, this.position.y * this.noiseScale);
     this.radius = lerp(this.minSize, this.maxSize, nz);
+    this.obstacle.radius = this.radius * AGENT_OBSTACLE_FACTOR;
   }
 
   separation(agents) {
@@ -66,13 +77,42 @@ class Agent {
     for (let other of agents) {
       if (other !== this) {
         let d = p5.Vector.dist(this.position, other.position);
-        if (d < this.radius + other.radius + 0.01) { 
+        if (d < (this.radius + other.radius + 0.01)*AGENT_MARGIN_FACTOR) { 
           let diff = p5.Vector.sub(this.position, other.position);
           diff.normalize();
           diff.div(d);
           steer.add(diff);
           count++;
         }
+      }
+    }
+    if (count > 0) {
+      steer.div(count);
+      steer.setMag(this.maxSpeed);
+      steer.sub(this.velocity);
+      steer.limit(this.maxForce);
+      return steer;
+    } else {
+      let stop = this.velocity.copy().mult(-1);
+      stop.limit(this.maxForce);
+      return stop;
+    }
+  }
+
+  avoid(items){
+    if(!this.enable_obstacles){ return createVector(0, 0) }
+
+    let steer = createVector(0, 0);
+    let count = 0;
+
+    for (let item of items) {
+      let d = p5.Vector.dist(this.position, item.position);
+      if (d < OBSTACLE_DESTRUCTION_DISTANCE) { 
+        let diff = p5.Vector.sub(this.position, item.position);
+        diff.normalize();
+        diff.div(d);
+        steer.add(diff);
+        count++;
       }
     }
     if (count > 0) {

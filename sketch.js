@@ -4,6 +4,9 @@ let h = 8 * DPI;
 let bw = 1 * DPI;
 
 
+let u = 0.5
+let t = 0;
+let interval = 20;
 
 let slimeagents = [];
 let emitters = [];
@@ -14,77 +17,118 @@ let groups = [];
 let hotspots = [];
 let connections = [];
 let chains = [];  
+let obstacles_grid; 
 
 let filtered_journeys = [];
 let median_journey_count = 0;
 let top_journey_count = 0;  
 let foodLayer;
 
-const SENSOR_ANGLE = Math.PI / 6;
-const SENSOR_DISTANCE = 10;
-const TURN_ANGLE = 0.3;
-const STEP_SIZE = 1.5;
-const EMITTER_ASSIGN_DISTANCE = 20;
 
-const EMITTER_MARGIN = 30;
-const OBSTACLE_MARGIN = 30; // distance between obstacles
-const OBSTACLE_SPACING = 10; // distance between hotspots and obstacles
+const EMITTER_MARGIN = 5;
+const OBSTACLE_MARGIN = 20; // distance between obstacles
+const OBSTACLE_SPACING = 5; // distance between hotspots and obstacles
+const AGENT_MARGIN_FACTOR = 8;
+const AGENT_OBSTACLE_FACTOR = 1;
+
+const SENSOR_ANGLE = Math.PI / 6;
+const TURN_ANGLE = 0.3;
+
+const SENSOR_DISTANCE = 10;
+const STEP_SIZE = 1.5
+const EMITTER_ASSIGN_DISTANCE = 5;
+const OBSTACLE_DESTRUCTION_DISTANCE = 30;
+
+// TO DO: both grids use the same cell size
+// But the hotspot grid needs to be much finer to get the effect
+// Should be proportional to the SENSOR DISTANCE and STEP SIZE
+const CELL_SIZE = 20;
 
 const PATH_DETAIL = 80;
 const MIN_JOURNEYS_TO_DRAW = 10;
-const MIN_HOTSPOT_DISTANCE = DPI/2; 
+
+// higher values give a more abstract network
+// perhaps we can combine high values for a large network, but with more detail in the paths?
+// when there are obstacles, a high hotspot distance stops paths forming through the obstacles, 
+// because they cannot bend round them
+
+const MIN_HOTSPOT_DISTANCE = 10; 
+const MIN_CONNECTION_ANGLE = 30;
+const MAX_CONNECTION_ANGLE = 130;
 const MIN_STROKE = 1;
 const MAX_STROKE = 50;
 const MIN_CHAIN_COUNT = 4;  
 const MAX_CHAIN_COUNT = 50; 
 
 
-const CSW = 8;
+const CSW = 2;
 
-const NUM_SLIMEAGENTS = 50;
-const NUM_EMITTERS = 80;
+const NUM_SLIMEAGENTS = 30;
+const NUM_EMITTERS = 100;
 const NUM_ATTRACTORS = 1500
-const NUM_OBSTACLES = 100;
+const NUM_OBSTACLES = 4000;
 
-const CELL_SIZE = 20;
+
 
 let show_slime = true
-let show_emitters = false;
-
-let enable_slimeagents = true
+let show_emitters = true;
+let show_obstacles = false;
+let enable_slimeagents = false
 
 let exporting = false;
 let running = true
 let debug = false;
 
+let stroke_colour;
+
+
 function setup() {
   createCanvas(w + 2*bw, h + 2*bw);
+
+  w = w / u
+  h = h / u 
+  bw = bw / u
+
+  pixelDensity(2);
+
+  stroke_colour = palette.black
   create_food();
 
   setup_gui();
 
-  create_emitters(w, h);
 }
+
 
 function draw() {
   if(!running) { noLoop(); }
   if(exporting){ beginRecordSVG(this, 'flower_agents.svg') }
-
-  update_slimeagents();
-
-
+  
+  scale(u)
   background(palette.background);
   translate(bw, bw);
 
+
+  update_slimeagents();
+
+  let update_fixtures = t % interval == 0;
+ 
+  draw_groups(palette.depth[0], true);
+
+  if(update_fixtures){
+    add_obstacles_to_grid();  
+  }
+  // draw_groups(palette.depth[1], !enable_slimeagents || update_fixtures);
+  // draw_groups(palette.depth[2], !enable_slimeagents || update_fixtures);
+  // draw_groups(palette.depth[3], !enable_slimeagents || update_fixtures);
+  // draw_groups(palette.depth[4], !enable_slimeagents || update_fixtures);
+  // draw_groups(palette.depth[5], !enable_slimeagents || update_fixtures);
+
   push();
-    draw_emitters();
     draw_obstacles();
     draw_attractors();
-  pop();
-  
-  draw_groups(palette.depth[0]);
-  draw_groups(palette.depth[1]);
+    draw_emitters();
 
+  pop();
   
   push();
     draw_journeys();
@@ -93,16 +137,36 @@ function draw() {
     draw_slimeagents();
   pop();
 
-  draw_groups(palette.depth[2]);
-  draw_groups(palette.depth[3]);
-  draw_groups(palette.depth[4]);
-  draw_groups(palette.depth[5]);
+  
   delete_empty_groups();
 
   if(exporting){ 
     endRecordSVG() 
     exporting = false;
   }
+
+  if(update_fixtures && enable_slimeagents){
+    generateHotspotsAndFlow();
+    if(t%interval*4==0) remove_intersecting_agents();
+  }
+
+  t++;
+}
+
+function create_slimeagents(){
+  remove_intersecting_agents();
+  emitters = [];
+  console.log("Creating emitters");
+  create_emitters(w, h);
+  add_obstacles_to_grid();
+
+  for (let emitter of emitters) {
+    for (let i = 0; i < NUM_SLIMEAGENTS; i++) {
+      slimeagents.push(new SlimeAgent(emitter.position.x, emitter.position.y, emitter));
+    }
+  }
+
+  enable_slimeagents = true;
 }
 
 function update_slimeagents(){
@@ -161,7 +225,7 @@ function draw_attractors() {
 }
 
 function draw_obstacles() {
-  if(!debug) { return; }
+  if(!show_obstacles) return;
 
   for (let obstacle of obstacles) {
     obstacle.draw();
@@ -182,6 +246,7 @@ function delete_slimeagents(){
   chains = [];
   foodLayer.clear();
   foodLayer.background(0);
+  enable_slimeagents  = false;
 
 }
 
@@ -195,9 +260,8 @@ function add_food(){
   }
 }
 
-
 function mousePressed() {
-  let position = createVector(mouseX - bw, mouseY - bw)
+  let position = createVector(mouseX/u - bw, mouseY/u - bw)
   console.log(groupSettings)
   let group = new Group(position, 
     groupSettings.fillColorIndex,
@@ -206,6 +270,7 @@ function mousePressed() {
   )
   groups.push(group);
 }
+
 
 function keyPressed() {
   if (key === 'p') {

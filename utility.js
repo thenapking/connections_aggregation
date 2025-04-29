@@ -94,12 +94,24 @@ function setup_gui(){
   const guiControls = {
     removeLastGroup: function() {
       if (groups && groups.length > 0) {
-        console.log("Removed the last group.", groups[groups.length - 1]);
-        groups.splice(groups.length - 1, 1);
+        let group_to_remove = groups[groups.length - 1];  
+
+        console.log("Removed the last group.", group_to_remove);
+
+        for(let obstacle of obstacles){
+          if(obstacle.group === group_to_remove){
+            obstacles.splice(obstacles.indexOf(obstacle), 1);
+          }
+        }
+        groups.splice(group_to_remove);
+        
       } 
     },
     generateRoutes: function() {
       generateHotspotsAndFlow();
+    },
+    showEmitters: function() {
+      show_emitters = !show_emitters;
     },
     showSlime: function() {
       show_slime = !show_slime;
@@ -127,6 +139,7 @@ function setup_gui(){
 
   gui.add(guiControls, "removeLastGroup").name("Remove Last Group");
   gui.add(guiControls, "generateRoutes").name("Generate Routes");
+  gui.add(guiControls, "showEmitters").name("Show Emitters");
   gui.add(guiControls, "pauseSlime").name("Pause Slime");
   gui.add(guiControls, "showSlime").name("Show Slime");
   gui.add(guiControls, "removeSlime").name("Remove Slime");

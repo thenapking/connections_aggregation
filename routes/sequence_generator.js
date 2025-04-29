@@ -24,12 +24,12 @@ class SequenceGenerator {
     let weight = this.weight_field ? trajectory.weight : 1;
     let prev_cell = null;
     for (let point of points) {
-      let nearest = this.nearestNeighbor(point);
-      let cellId = nearest.id;
+      let nearest = this.nearest_neighbour(point);
+      let cell_id = nearest.id;
       if (sequence.length >= 1) {
         prev_cell = sequence[sequence.length - 1];
-        if (cellId != prev_cell) {
-          let key = prev_cell + "," + cellId;
+        if (cell_id != prev_cell) {
+          let key = prev_cell + "," + cell_id;
           if (this.sequences.hasOwnProperty(key)) {
             this.sequences[key] += weight;
           } else {
@@ -37,29 +37,29 @@ class SequenceGenerator {
           }
         }
       }
-      if (cellId != prev_cell) {
+      if (cell_id != prev_cell) {
         let m_val = point.m || 0;
         let t = new Date((m_val + 8 * 3600) * 1000);
         let h = t.getHours();
         let quarter = Math.floor(h / 6);
-        this.id_to_centroid[cellId].counts[0] += weight;
-        this.id_to_centroid[cellId].counts[quarter + 1] += weight;
-        sequence.push(cellId);
+        this.id_to_centroid[cell_id].counts[0] += weight;
+        this.id_to_centroid[cell_id].counts[quarter + 1] += weight;
+        sequence.push(cell_id);
       }
     }
   }
   
-  nearestNeighbor(p) {
-    let best = null;
-    let bestDist = Infinity;
+  nearest_neighbour(p) {
+    let nearest = null;
+    let nearest_dist = Infinity;
     for (let f of this.centroids) {
       let d = p5.Vector.dist(p, f.geometry);
-      if (d < bestDist) {
-        bestDist = d;
-        best = f;
+      if (d < nearest_dist) {
+        nearest_dist = d;
+        nearest = f;
       }
     }
-    return best;
+    return nearest;
   }
 
   create_connections() {
@@ -78,7 +78,7 @@ class SequenceGenerator {
         if (this.intersectsObstacle(fromFeature, toFeature)) { continue }
 
         let geometry = [fromFeature.geometry.copy(), toFeature.geometry.copy()];
-        let connection = new Connection(parseInt(from), parseInt(to), geometry, this.sequences[key]);
+        let connection = new Connection(parseInt(from), parseInt(to), geometry, 0, this.sequences[key]);
         connections.push(connection);
       }
     }

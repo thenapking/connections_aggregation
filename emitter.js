@@ -1,7 +1,7 @@
 class Emitter {
   constructor(x, y) {
     this.position = createVector(x, y);
-    this.radius = 10;
+    this.radius = EMITTER_MARGIN
   }
 
   draw() {
@@ -15,8 +15,9 @@ class Emitter {
 
 function create_emitters(width, height) {
   while(emitters.length < NUM_EMITTERS){
-    let x = random(width);
-    let y = random(height);
+    let x = constrain(randomGaussian(width/2, width/5), 0, width);
+    let y = constrain(randomGaussian(height/2, height/5), 0, height);
+    console.log(x, y);
     let intersecting = false;
 
     for(let other of emitters){
@@ -29,21 +30,21 @@ function create_emitters(width, height) {
 
     for(let other of obstacles){
       let d = p5.Vector.dist(createVector(x, y), other.position);
-      if(d < other.radius + OBSTACLE_MARGIN){
-        intersecting = true;
+      if(d < other.radius*2 + OBSTACLE_MARGIN){
+        other.group.remove_agent(other.agent);
         break;
       }
     }
+    
     if(!intersecting) {
       emitters.push(new Emitter(x, y));
     }
   }
-}
 
-function create_slimeagents(){
-  for (let emitter of emitters) {
-    for (let i = 0; i < NUM_SLIMEAGENTS; i++) {
-      slimeagents.push(new SlimeAgent(emitter.position.x, emitter.position.y, emitter));
-    }
+  for(let emitter of emitters){
+    let attractor = new Attractor(emitter.position.x, emitter.position.y, 2);
+    attractors.push(attractor);
+    
   }
 }
+
