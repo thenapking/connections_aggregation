@@ -1,7 +1,10 @@
 const DPI = 96
-let w = 6 * DPI;
-let h = 8 * DPI;
-let bw = 1 * DPI;
+let wi = 6;
+let hi = 8;
+let bwi = 1
+let w = wi * DPI;
+let h = hi * DPI;
+let bw = bwi * DPI;
 
 
 let u = 0.42
@@ -80,19 +83,32 @@ let running = true
 let debug = false;
 
 let stroke_colour;
-
+let paper;
+let seed;
 
 function setup() {
+  seed = random(1000000);
+  seed = 348097.90726263414
+  randomSeed(seed);
+  noiseSeed(seed);
+  console.log("Seed: " + seed);
+
   createCanvas(w + 2*bw, h + 2*bw);
+  paper = createGraphics(w + 2*bw, h + 2*bw);
 
   w = w / u
   h = h / u 
   bw = bw / u
 
+  
+
   pixelDensity(2);
 
   stroke_colour = palette.black
+
+  create_noise_field()
   create_food();
+  create_map();
 
   setup_gui();
 
@@ -103,10 +119,10 @@ function draw() {
   if(!running) { noLoop(); }
   if(exporting){ beginRecordSVG(this, 'flower_agents.svg') }
   
-  scale(u)
-  background(palette.background);
-  translate(bw, bw);
+  image(paper, 0, 0);
 
+  scale(u)
+  translate(bw, bw);
 
   update_slimeagents();
 
@@ -117,11 +133,6 @@ function draw() {
   if(update_fixtures){
     add_obstacles_to_grid();  
   }
-  // draw_groups(palette.depth[1], !enable_slimeagents || update_fixtures);
-  // draw_groups(palette.depth[2], !enable_slimeagents || update_fixtures);
-  // draw_groups(palette.depth[3], !enable_slimeagents || update_fixtures);
-  // draw_groups(palette.depth[4], !enable_slimeagents || update_fixtures);
-  // draw_groups(palette.depth[5], !enable_slimeagents || update_fixtures);
 
   push();
     draw_obstacles();
@@ -291,13 +302,21 @@ function keyPressed() {
     exporting = false;
   }
 
-  if (key === 'd') {
-    generateHotspotsAndFlow();
-    loop();
-  }
+  let keys = Object.keys(paper_palettes)
 
-  if( key === 'a'){
-    show_slime = !show_slime
+  if (key == '+' || key == '=') {
+    paper_palette_name = keys[(keys.indexOf(paper_palette_name) + 1) % keys.length]
+    paper_palette = paper_palettes[paper_palette_name]
+    console.log(paper_palette_name)
+    create_map();
+    redraw();
+  } else if (key == '-' || key == '_') {
+    paper_palette_name = keys[(keys.indexOf(paper_palette_name) - 1 + keys.length) % keys.length]
+    paper_palette = paper_palettes[paper_palette_name]
+
+    console.log(paper_palette_name)
+    create_map();
+    redraw();
   }
   
 }

@@ -17,8 +17,8 @@ class Emitter {
 
 function create_emitters(width, height) {
   while(emitters.length < NUM_EMITTERS){
-    let x = constrain(randomGaussian(width/2, width/5), 0, width);
-    let y = constrain(randomGaussian(height/2, height/5), 0, height);
+    let x = constrain(randomGaussian(width/2, width/5), EMITTER_MARGIN, width - EMITTER_MARGIN);
+    let y = constrain(randomGaussian(height/2, height/5), EMITTER_MARGIN, height - EMITTER_MARGIN);
     console.log(x, y);
     let intersecting = false;
 
@@ -38,10 +38,12 @@ function create_emitters(width, height) {
       }
     }
     
-    if(!intersecting) {
+    if(!intersecting){ 
       emitters.push(new Emitter(x, y));
     }
   }
+
+  remove_emitters();
 
   for(let emitter of emitters){
     let attractor = new Attractor(emitter.position.x, emitter.position.y, 2);
@@ -80,4 +82,21 @@ function create_emitters_from_foodlayer(){
     }
   }
 }
+
+function remove_emitters(){
+  for(let emitter of emitters){
+    if(below_water_level(emitter.position)){
+      if(emitter.hotspot){
+        emitter.hotspot.emitter = null;
+      }
+
+      let index = emitters.indexOf(emitter);
+      if(index > -1) {
+        emitters.splice(index, 1);
+      }
+    }
+  }
+}
+
+
 

@@ -55,10 +55,17 @@ class Agent {
   }
 
   edges(){
-    if (this.position.x < 0) { this.outside = true }
-    if (this.position.x > w) { this.outside = true  }
-    if (this.position.y < 0) { this.outside = true  }
-    if (this.position.y > h) { this.outside = true  }
+    if (this.position.x - this.radius < 0) { this.outside = true }
+    if (this.position.x + this.radius > w) { this.outside = true  }
+    if (this.position.y - this.radius < 0) { this.outside = true  }
+    if (this.position.y + this.radius > h) { this.outside = true  }
+
+    let col = constrain(floor(this.position.x / (resolution * u)), 0 , cols - 1);
+    let row = constrain(floor(this.position.y / (resolution * u)), 0 , rows - 1);
+    let v = values[col][row];
+    if(v > WATER_LEVEL){
+      this.outside = true;
+    }
   }
 
   resize() {

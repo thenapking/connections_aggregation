@@ -189,6 +189,8 @@ function attach_emitters(){
 function create_hotspot_emitters(){
   for(let hotspot of hotspots){
     if(hotspot.count > 1 && !hotspot.emitter ) {
+      if(below_water_level(hotspot.centroid)) { continue; }
+
       let nearest_dist = Infinity;
       for(let other of emitters){
         let d = p5.Vector.dist(other.position, hotspot.centroid);
@@ -196,6 +198,7 @@ function create_hotspot_emitters(){
           nearest_dist = d;
         }
       }
+
       if(nearest_dist < EMITTER_MARGIN ) { continue; }
       let r = hotspot.major ? 20 : 2;
       let emitter = new Emitter(hotspot.position.x, hotspot.position.y);
