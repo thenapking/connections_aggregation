@@ -4,7 +4,7 @@ let h = 8 * DPI;
 let bw = 1 * DPI;
 
 
-let u = 0.5
+let u = 0.42
 let t = 0;
 let interval = 20;
 
@@ -25,7 +25,7 @@ let top_journey_count = 0;
 let foodLayer;
 
 
-const EMITTER_MARGIN = 5;
+const EMITTER_MARGIN = 30;
 const OBSTACLE_MARGIN = 20; // distance between obstacles
 const OBSTACLE_SPACING = 5; // distance between hotspots and obstacles
 const AGENT_MARGIN_FACTOR = 8;
@@ -53,8 +53,8 @@ const MIN_JOURNEYS_TO_DRAW = 10;
 // because they cannot bend round them
 
 const MIN_HOTSPOT_DISTANCE = 10; 
-const MIN_CONNECTION_ANGLE = 30;
-const MAX_CONNECTION_ANGLE = 130;
+const MIN_CONNECTION_ANGLE = 50;
+const MAX_CONNECTION_ANGLE = 120;
 const MIN_STROKE = 1;
 const MAX_STROKE = 50;
 const MIN_CHAIN_COUNT = 4;  
@@ -147,7 +147,10 @@ function draw() {
 
   if(update_fixtures && enable_slimeagents){
     generateHotspotsAndFlow();
-    if(t%interval*4==0) remove_intersecting_agents();
+    if(t % (interval * 4) == 0){
+      remove_intersecting_agents();
+      create_emitters_from_foodlayer()
+    }
   }
 
   t++;

@@ -1,7 +1,9 @@
 class Emitter {
   constructor(x, y) {
     this.position = createVector(x, y);
-    this.radius = EMITTER_MARGIN
+    this.radius = 5
+    this.attractor = null;
+    this.hotspot = null;
   }
 
   draw() {
@@ -43,8 +45,39 @@ function create_emitters(width, height) {
 
   for(let emitter of emitters){
     let attractor = new Attractor(emitter.position.x, emitter.position.y, 2);
+    emitter.attractor = attractor;
     attractors.push(attractor);
-    
+
+  }
+}
+
+function create_emitters_from_foodlayer(){
+  foodLayer.loadPixels();
+  for (let i = 0; i < foodLayer.pixels.length; i+=4) {
+    let r = foodLayer.pixels[i];
+   
+    if(r == 200){
+      let x = (i / 4) % foodLayer.width;
+      let y = Math.floor((i / 4) / foodLayer.width);
+      let new_position = createVector(x, y);
+      let nearest_distance = Infinity;
+      if(x > w || y > h){ continue; }
+
+      for(let other of emitters){
+        let d = p5.Vector.dist(new_position, other.position);
+        if(d < nearest_distance){
+          nearest_distance = d;
+        }
+      }
+
+      if(nearest_distance > EMITTER_MARGIN * 2){
+        let emitter = new Emitter(x, y)
+        let attractor = new Attractor(x, y, 2);
+
+        emitters.push(emitter);
+        emitter.attractor = attractor;
+      }
+    }
   }
 }
 

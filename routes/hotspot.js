@@ -6,6 +6,8 @@ class Hotspot {
     this.count = 0;
     this.position = this.centroid;
     this.major = false;
+    this.emitter = null;
+    this.nearest_emitter_distance = Infinity;
   }
 
   add_point(pt) {
@@ -27,7 +29,6 @@ class Hotspot {
 
   draw(){
     if(this.centroid === undefined) { return }
-    if(this.count === 0) { return }
     noStroke();
     fill(stroke_colour);
     let sz = this.major ? CSW*8 : CSW;
@@ -101,7 +102,7 @@ function generateHotspotsAndFlow() {
 
   hotspots = hotspot_grid.resulting_groups;
   major_hotspots = mergeCloseHotspots(hotspots, 160);
-  minor_hotspots = mergeCloseHotspots(hotspots, 10);
+  minor_hotspots = mergeCloseHotspots(hotspots, 30);
 
   for(let hotspot of major_hotspots){
     hotspot.major = true;
@@ -133,6 +134,7 @@ function generateHotspotsAndFlow() {
   connections = refineNetwork(connections);
 
   attach_emitters();
+  create_hotspot_emitters()
   count_journeys();
   connection_statistics();
 
@@ -150,11 +152,62 @@ function attach_emitters(){
       if (d < nearest_dist) {
         nearest_dist = d;
         nearest = hotspot;
+        if(d < hotspot.nearest_emitter_distance){
+          hotspot.nearest_emitter_distance = d;
+        }
       }
     }
-    if(nearest){
+
+    if(nearest_dist < EMITTER_MARGIN){
       nearest.emitter = emitter;
       emitter.hotspot = nearest;
+      
+      let moving_closer = false;
+
+      for(let other of emitters){
+        if(other == emitter) continue;
+        let d1 = p5.Vector.dist(other.position, nearest.position);
+        let d2 = p5.Vector.dist(other.position, emitter.position);
+        if (d1 < EMITTER_MARGIN && d1 < d2) {
+          moving_closer = true;
+          break;
+        }
+      }
+
+      if(!moving_closer){
+        emitter.position = nearest.centroid.copy();
+        if(nearest.major && emitter.attractor){
+          emitter.attractor.radius = 20;
+        } else {
+          emitter.attractor.radius = 2;
+        }
+      }
+    }
+  }
+}
+
+function create_hotspot_emitters(){
+  for(let hotspot of hotspots){
+    if(hotspot.count > 1 && !hotspot.emitter ) {
+      let nearest_dist = Infinity;
+      for(let other of emitters){
+        let d = p5.Vector.dist(other.position, hotspot.centroid);
+        if(d < nearest_dist){
+          nearest_dist = d;
+        }
+      }
+      if(nearest_dist < EMITTER_MARGIN ) { continue; }
+      let r = hotspot.major ? 20 : 2;
+      let emitter = new Emitter(hotspot.position.x, hotspot.position.y);
+      let attractor = new Attractor(hotspot.position.x, hotspot.position.y, r);
+
+      emitter.hotspot = hotspot;
+      emitter.attractor = attractor;
+
+      emitters.push(emitter);
+
+      hotspot.emitter = emitter;
+
     }
   }
 }
