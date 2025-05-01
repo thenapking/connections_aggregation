@@ -28,8 +28,8 @@ class Journey {
     let eB = this.emitterB;
 
     for(let connection of connections){
-      let hA = hotspots[connection.from];
-      let hB = hotspots[connection.to];
+      let hA = connection.from
+      let hB = connection.to
       if(hA.emitter == eA && hB.emitter == eB
         || hA.emitter == eB && hB.emitter == eA){
        
