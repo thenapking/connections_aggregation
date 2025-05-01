@@ -58,7 +58,9 @@ class Hotspot {
     if(this.centroid === undefined) { return }
     noStroke();
     fill(stroke_colour);
-    ellipse(this.centroid.x, this.centroid.y, CSW + 2);
+    if(this.nearest_major_hotspot_id) { fill(255, 0, 0)}
+    let sz = this.nearest_major_hotspot_id ? CSW * 4 : CSW + 2
+    ellipse(this.centroid.x, this.centroid.y, sz);
   }
 }
 
@@ -138,14 +140,21 @@ function create_hotspots() {
     hotspot.major = true;
   }
 
+  for(let i = 0; i < major_hotspots.length; i++){
+    major_hotspots[i].id = i;
+  }
+
+  for(let i = 0; i < minor_hotspots.length; i++){
+    minor_hotspots[i].id = i + major_hotspots.length;
+  }
+
   hotspots = major_hotspots.concat(minor_hotspots);
 
-  hotspots = mergeCloseHotspots(hotspots, 20);
+
+  // hotspots = mergeCloseHotspots(hotspots, 20);
 
 
-  for (let i = 0; i < hotspots.length; i++) {
-    hotspots[i].id = i;
-  }
+  
 
   
   let trajectories = [];
@@ -176,13 +185,13 @@ function create_hotspots() {
   // aggregate_journeys();
   // connection_statistics();
   let hotspot_connections = create_hotspot_connections(connections, hotspots)
-  // let minor_hotspot_connections = create_hotspot_connections(minor_connections, minor_hotspots)
-  // let major_hotspot_connections = create_hotspot_connections(major_connections, major_hotspots)
+  let minor_hotspot_connections = create_hotspot_connections(minor_connections, minor_hotspots)
+  let major_hotspot_connections = create_hotspot_connections(major_connections, major_hotspots)
 
   attach_major_hotspots(160)
 
-  // minor_chains = create_chains(minor_hotspot_connections, minor_connections, minor_hotspots);
-  // major_chains = create_chains(major_hotspot_connections, major_connections, major_hotspots);
+  minor_chains = create_chains(minor_hotspot_connections, minor_connections, minor_hotspots);
+  major_chains = create_chains(major_hotspot_connections, major_connections, major_hotspots);
   chains = create_chains(hotspot_connections, connections, hotspots);
 
   
@@ -192,21 +201,22 @@ function attach_major_hotspots(max_dist) {
   for(let major_hotspot of major_hotspots) {
     let nearest = null;
     let nearest_dist = Infinity;
-    for(let minor_hotspot of minor_hotspots) {
-      let d = p5.Vector.dist(major_hotspot.centroid, minor_hotspot.centroid);
+    for(let hotspot of hotspots) {
+      let d = p5.Vector.dist(major_hotspot.centroid, hotspot.centroid);
       if (d < nearest_dist && d < max_dist) {
         nearest_dist = d;
-        nearest = minor_hotspot;
+        nearest = hotspot;
       }
     }
     if (nearest) {
       nearest.nearest_major_hotspot_id = major_hotspot.id;
+      // console.log("Attached major hotspot", major_hotspot.id, "to", nearest.id);
     }
   }
 }
 
 
-function refineNetwork(connections, minAngle, maxAngle) {
+function refineNetwork(connections) {
   let new_connections = connections.slice();
   let iterations = 0;
   let maxIterations = 3;

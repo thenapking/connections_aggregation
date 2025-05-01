@@ -73,7 +73,6 @@ function create_emitters(width, height) {
   while(emitters.length < NUM_EMITTERS){
     let x = constrain(randomGaussian(width/2, width/5), EMITTER_MARGIN, width - EMITTER_MARGIN);
     let y = constrain(randomGaussian(height/2, height/5), EMITTER_MARGIN, height - EMITTER_MARGIN);
-    console.log(x, y);
     
     if(below_water_level(createVector(x,y))){ continue; }
 
