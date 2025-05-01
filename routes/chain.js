@@ -15,11 +15,12 @@ class Chain {
     this.length++;
   }
 
-  draw(){
+  draw(colour){
     strokeWeight(4);
 
     noFill();
-    stroke(stroke_colour);
+    colour = colour || stroke_colour;
+    stroke(colour);
     if(this.major){ stroke(0,200,100); }
     beginShape();
       curveVertex(this.points[0].x, this.points[0].y);
@@ -35,10 +36,9 @@ class Chain {
 
 const MAX_CHAIN_LENGTH = 1000;
 
-let hotspot_connections = {};
 
 function create_hotspot_connections(connections, hotspots) {
-  hotspot_connections = {};
+  let hotspot_connections = {};
 
   for (let hotspot of hotspots) {
     hotspot_connections[hotspot.id] = [];
@@ -48,9 +48,11 @@ function create_hotspot_connections(connections, hotspots) {
     hotspot_connections[connection.from].push(connection);
     hotspot_connections[connection.to].push(connection);
   }
+
+  return hotspot_connections;
 }
 
-function create_chains(connections, hotspots) {
+function create_chains(hotspot_connections, connections, hotspots) {
   let visited = new Set(); 
   let chains = [];
 
@@ -58,7 +60,7 @@ function create_chains(connections, hotspots) {
     let connections = hotspot_connections[hotspot.id];
     for (let connection of connections) {
       if (!visited.has(connection)) {
-        let chain = create_chain(connection, hotspot.id, visited);
+        let chain = create_chain(hotspot_connections, connection, hotspot.id, visited);
         chains.push(chain);
       }
     }
@@ -66,7 +68,7 @@ function create_chains(connections, hotspots) {
 
   for (let connection of connections) {
     if (!visited.has(connection)) {
-      let chain = create_chain(connection, connection.from, visited);
+      let chain = create_chain(hotspot_connections, connection, connection.from, visited);
       chains.push(chain);
     }
   }
@@ -74,7 +76,7 @@ function create_chains(connections, hotspots) {
   return chains;
 }
 
-function create_chain(connection, hotspot_id, visited) {
+function create_chain(hotspot_connections, connection, hotspot_id, visited) {
   let current_connection = connection;
   let current_hotspot_id = hotspot_id;
   let current_hotspot = find_hotspot(current_hotspot_id);

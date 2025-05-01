@@ -144,7 +144,9 @@ function draw() {
   push();
     draw_journeys();
     draw_hotspots();
-    draw_chains();
+    // draw_chains(chains);
+    draw_chains(minor_chains, "#ff0000");
+    draw_chains(major_chains, "#00ff00");
     draw_slimeagents();
   pop();
 
@@ -241,10 +243,10 @@ function draw_connections(){
   pop()
 }
 
-function draw_chains() {
+function draw_chains(chains, colour) {
   push()
   for (let chain of chains) {
-    chain.draw();
+    chain.draw(colour);
   }
   pop()
 }

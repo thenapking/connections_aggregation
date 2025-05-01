@@ -1,16 +1,15 @@
 class SequenceGenerator {
-  constructor(centroidFeatures, trajectoryFeatures, weight_field) {
-    this.centroids = centroidFeatures;
-    this.trajectories = trajectoryFeatures;
-    this.weight_field = weight_field || null;
-    this.id_to_centroid = {};
+  constructor(hotspots, trajectories) {
+    this.hotspots = hotspots;
+    this.trajectories = trajectories;
+    this.id_to_hotspot = {};
     this.sequences = {};
     this.initialize();
   }
 
   initialize() {
-    for (let f of this.centroids) {
-      this.id_to_centroid[f.id] = { feature: f, counts: [0, 0, 0, 0, 0] };
+    for (let hotspot of this.hotspots) {
+      this.id_to_hotspot[hotspot.id] = { hotspot: hotspot, counts: [0, 0, 0, 0, 0] };
     }
 
     for (let traj of this.trajectories) {
@@ -21,7 +20,6 @@ class SequenceGenerator {
   evaluate_trajectory(trajectory) {
     let points = trajectory;
     let sequence = [];
-    let weight = this.weight_field ? trajectory.weight : 1;
     let prev_cell = null;
     for (let point of points) {
       let nearest = this.nearest_neighbour(point);
@@ -31,19 +29,20 @@ class SequenceGenerator {
         if (cell_id != prev_cell) {
           let key = prev_cell + "," + cell_id;
           if (this.sequences.hasOwnProperty(key)) {
-            this.sequences[key] += weight;
+            this.sequences[key] += 1;
           } else {
-            this.sequences[key] = weight;
+            this.sequences[key] = 1;
           }
         }
       }
+      // I think this, and the whole counts thing is not needed
       if (cell_id != prev_cell) {
         let m_val = point.m || 0;
         let t = new Date((m_val + 8 * 3600) * 1000);
         let h = t.getHours();
         let quarter = Math.floor(h / 6);
-        this.id_to_centroid[cell_id].counts[0] += weight;
-        this.id_to_centroid[cell_id].counts[quarter + 1] += weight;
+        this.id_to_hotspot[cell_id].counts[0] += 1;
+        this.id_to_hotspot[cell_id].counts[quarter + 1] += 1;
         sequence.push(cell_id);
       }
     }
@@ -52,11 +51,11 @@ class SequenceGenerator {
   nearest_neighbour(p) {
     let nearest = null;
     let nearest_dist = Infinity;
-    for (let f of this.centroids) {
-      let d = p5.Vector.dist(p, f.geometry);
+    for (let hotspot of this.hotspots) {
+      let d = p5.Vector.dist(p, hotspot.centroid);
       if (d < nearest_dist) {
         nearest_dist = d;
-        nearest = f;
+        nearest = hotspot;
       }
     }
     return nearest;
@@ -72,12 +71,12 @@ class SequenceGenerator {
 
        
 
-        let fromFeature = this.id_to_centroid[from].feature;
-        let toFeature = this.id_to_centroid[to].feature;
+        let from_hotspot = this.id_to_hotspot[from].hotspot;
+        let to_hotspot = this.id_to_hotspot[to].hotspot;
 
-        if (this.intersectsObstacle(fromFeature, toFeature)) { continue }
+        if (this.intersectsObstacle(from_hotspot, to_hotspot)) { continue }
 
-        let geometry = [fromFeature.geometry.copy(), toFeature.geometry.copy()];
+        let geometry = [from_hotspot.centroid.copy(), to_hotspot.centroid.copy()];
         let connection = new Connection(parseInt(from), parseInt(to), geometry, 0, this.sequences[key]);
         connections.push(connection);
       }
@@ -85,9 +84,9 @@ class SequenceGenerator {
     return connections;
   }
 
-  intersectsObstacle(fromFeature, toFeature) {
-    let A = fromFeature.geometry.copy();
-    let B = toFeature.geometry.copy();
+  intersectsObstacle(from_hotspot, to_hotspot) {
+    let A = from_hotspot.centroid.copy();
+    let B = to_hotspot.centroid.copy();
 
     for (let obs of obstacles) {
       let C = obs.position;  
