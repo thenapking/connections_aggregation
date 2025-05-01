@@ -6,6 +6,7 @@ class Agent {
     this.velocity = createVector(0, 0);
 
     this.direction = direction; // an angle in radians, not a vector
+    this.max_direction_change = PI/2;
     this.theta = theta;         
     this.radius = radius;      
     this.depth = depth;         
@@ -39,6 +40,18 @@ class Agent {
   applyForce(force, m = 1) {
     force.mult(m);
     this.acceleration.add(force);
+  }
+
+  applyAlignment(delta) {
+    let new_direction = this.direction + delta;
+    let col = constrain(floor(this.position.x / (resolution * u)), 0 , cols);
+    let row = constrain(floor(this.position.y / (resolution * u)), 0 , rows);
+    let fv = flow_values[col][row];
+    
+    new_direction = constrain(new_direction, fv - PI/8, fv + PI/8);
+    if(Math.abs(this.direction - new_direction) < this.max_direction_change){
+      this.direction = new_direction;
+    }
   }
   
   update() {
@@ -104,6 +117,28 @@ class Agent {
       stop.limit(this.maxForce);
       return stop;
     }
+  }
+
+  alignment(agents) {
+    if(!this.enable_alignment){ return createVector(0, 0) }
+
+    let sumAngle = 0;
+    let count = 0;
+    for (let other of agents) {
+      if (other !== this) {
+        let d = p5.Vector.dist(this.position, other.position);
+        if (d < 25) {
+          sumAngle += other.direction
+          count++;
+        }
+      }
+    }
+    if (count > 0) {
+      let desired = sumAngle / count;
+      let dAngle = desired - this.direction;
+      return 0.00005* dAngle;
+    }
+    return 0;
   }
 
   avoid(items){
@@ -197,9 +232,11 @@ class Agent {
     push();
       fill(palette.colours[this.group.fillColorIndex]);
       stroke(palette.colours[this.group.strokeColorIndex]);
+      strokeWeight(2);
       translate(this.position.x, this.position.y);
       rotate(this.direction);
-      ellipse(0, 0, this.radius * 2);
+      ellipse(0, 0, this.radius, this.radius*1.25);
+      // rect(0, 0, this.radius, this.radius*1.5);
     pop();
   }
 }

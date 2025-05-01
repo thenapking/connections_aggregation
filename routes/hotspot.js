@@ -31,8 +31,7 @@ class Hotspot {
     if(this.centroid === undefined) { return }
     noStroke();
     fill(stroke_colour);
-    let sz = this.major ? CSW*8 : CSW;
-    ellipse(this.centroid.x, this.centroid.y, sz);
+    ellipse(this.centroid.x, this.centroid.y, CSW + 2);
   }
 }
 
@@ -102,7 +101,7 @@ function generateHotspotsAndFlow() {
 
   hotspots = hotspot_grid.resulting_groups;
   major_hotspots = mergeCloseHotspots(hotspots, 160);
-  minor_hotspots = mergeCloseHotspots(hotspots, 30);
+  minor_hotspots = mergeCloseHotspots(hotspots, 20);
 
   for(let hotspot of major_hotspots){
     hotspot.major = true;
@@ -189,7 +188,7 @@ function attach_emitters(){
 function create_hotspot_emitters(){
   for(let hotspot of hotspots){
     if(hotspot.count > 1 && !hotspot.emitter ) {
-      if(below_water_level(hotspot.centroid)) { continue; }
+      if(below_water_level(hotspot.position)) { continue; }
 
       let nearest_dist = Infinity;
       for(let other of emitters){
@@ -436,6 +435,8 @@ function followChain(startConn, startHotspot) {
     let nextHotspot = (currentConn.from === currentHotspot) ? currentConn.to : currentConn.from;
     let nextH = hotspots.find(h => h.id === nextHotspot);
     if (!nextH) break;
+
+    // TO DO push the points of the connection between the hotspots
     chainPoints.push(nextH.centroid.copy());
     
     // If next hotspot is an endpoint (i.e. its connection count is not 2), or there’s no unvisited connection from it, stop.

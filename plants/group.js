@@ -106,6 +106,7 @@ class Group {
       for(let i=0; i< 500; i++){
         let x = position.x + random(-10, 10);
         let y = position.y + random(-10, 10);
+        let direction = random(-PI, PI);
         let agent = new Agent(createVector(x,y), direction, rootTheta, rootRadius, rootN, this, 0, this.childoptions);
         this.agents.push(agent);
         this.grid.add(agent);
@@ -127,6 +128,7 @@ class Group {
   }
 
   update_branches(){
+    if(this.enableSeparation) { return; }
     for (let i = this.branches.length - 1; i >= 0; i--) {
       let branch = this.branches[i];
       branch.update();
@@ -169,6 +171,11 @@ class Group {
       if(this.enableSeparation) {
         let separation = agent.separation(others);
         agent.applyForce(separation, 2);
+      }
+
+      if(this.enableAlignment) {
+        let alignment = agent.alignment(others);
+        agent.applyAlignment(alignment);
       }
 
       agent.update();

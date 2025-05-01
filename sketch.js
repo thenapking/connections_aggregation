@@ -88,7 +88,7 @@ let seed;
 
 function setup() {
   seed = random(1000000);
-  seed = 348097.90726263414
+  // seed = 348097.90726263414
   randomSeed(seed);
   noiseSeed(seed);
   console.log("Seed: " + seed);
@@ -253,6 +253,7 @@ function create_food(){
 
 function delete_slimeagents(){
   slimeagents = [];
+  emitters = [];
   hotspots = [];
   connections = [];
   journeys = [];

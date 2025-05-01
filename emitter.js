@@ -20,6 +20,9 @@ function create_emitters(width, height) {
     let x = constrain(randomGaussian(width/2, width/5), EMITTER_MARGIN, width - EMITTER_MARGIN);
     let y = constrain(randomGaussian(height/2, height/5), EMITTER_MARGIN, height - EMITTER_MARGIN);
     console.log(x, y);
+    
+    if(below_water_level(createVector(x,y))){ continue; }
+
     let intersecting = false;
 
     for(let other of emitters){
@@ -43,7 +46,6 @@ function create_emitters(width, height) {
     }
   }
 
-  remove_emitters();
 
   for(let emitter of emitters){
     let attractor = new Attractor(emitter.position.x, emitter.position.y, 2);
@@ -62,6 +64,8 @@ function create_emitters_from_foodlayer(){
       let x = (i / 4) % foodLayer.width;
       let y = Math.floor((i / 4) / foodLayer.width);
       let new_position = createVector(x, y);
+      if(below_water_level(new_position)){ continue; }
+
       let nearest_distance = Infinity;
       if(x > w || y > h){ continue; }
 

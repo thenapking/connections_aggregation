@@ -16,7 +16,7 @@ function create_map(){
 
 
   paper.push()
-    paper_texture();
+    // paper_texture();
   paper.pop();
 }
 
@@ -49,7 +49,7 @@ function paper_texture() {
 
   const segments = Math.floor(random(0.1*w, 0.3*w))
   const segment_w = width / segments;
-  const grain_density = random(1.2,1.6);
+  const grain_density = random(1.2,1.6) / u;
   const angle = random(-0.05,  0.05)
 
   
@@ -111,6 +111,7 @@ function create_noise_field(){
       let x = i * resolution * noiseScale;
       let y = j * resolution * noiseScale;
       let v = fbm(x, y) ;
+
       let k = Math.floor(v*100)/100
       
       values[i][j] = v
@@ -124,7 +125,10 @@ function create_noise_field(){
 
   let keys = Object.keys(grouped_values);
   keys = keys.map(str => parseFloat(str)).sort((a, b) => a - b);
-  WATER_LEVEL = keys[Math.floor(keys.length * 0.6)];
+  WATER_LEVEL = keys[Math.floor(keys.length * 0.5)];
+  console.log("Water level: " + WATER_LEVEL);
+  create_flow_field();
+
 }
 
 function fbm(x, y, octaves=8) {
@@ -144,7 +148,7 @@ function draw_contours(){
   paper.noFill();
   paper.scale(u) //why twice?
 
-  for (let t = 0; t <= 1.00; t += isoStep) {
+  for (let t = 0; t <= WATER_LEVEL; t += isoStep) {
     let segments = marchingSquares(values, cols, rows, resolution, t);
     for(let segment of segments){
       let alpha = paper_palette.strength * map(t, min_threshold, max_threshold, 10, 20);
@@ -229,4 +233,31 @@ function below_water_level(position){
 
 function above_water_level(position){
   !below_water_level(position)
+}
+
+let flow_values = [];  
+let max_fv = 0, min_fv = Infinity ;
+function create_flow_field() {
+  flow_values = [];
+  for (let i = 0; i < cols; i++) {
+    flow_values[i] = [];
+    for (let j = 0; j < rows; j++) {
+      let left  = values[max(i-1,0)][j];
+      let right = values[min(i+1,cols-1)][j];
+      let top   = values[i][max(j-1,0)];
+      let bot   = values[i][min(j+1,rows-1)];
+
+      // gradient ∇f = (df/dx, df/dy)
+      let dfdx = (right - left)  / (2 * resolution * u);
+      let dfdy = (bot   - top)   / (2 * resolution * u);
+
+      // rotate by +90° to get tangent (or –90° depending on direction you prefer)
+      // [tx, ty] = normalize( [-dfdy, dfdx] )
+      let tx = -dfdy;
+      let ty =  dfdx;
+      let mag = sqrt(tx*tx + ty*ty) || 1;
+
+      flow_values[i][j] = createVector(tx/mag, ty/mag).rotate(HALF_PI).heading();
+    }
+  }
 }
