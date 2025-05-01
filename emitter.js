@@ -6,12 +6,66 @@ class Emitter {
     this.hotspot = null;
   }
 
+  attach_hotspot() {
+    let nearest  = null;
+    let nearest_dist = Infinity;
+
+    for(let hotspot of hotspots) {
+      let d = p5.Vector.dist(hotspot.position, this.position);
+      if (d < nearest_dist) {
+        nearest_dist = d;
+        nearest = hotspot;
+        if(d < hotspot.nearest_emitter_distance){
+          hotspot.nearest_emitter_distance = d;
+        }
+      }
+    }
+
+    if(nearest_dist > EMITTER_MARGIN){ return; }
+
+    nearest.emitter = this;
+    this.hotspot = nearest;
+    
+    let moving_closer = false;
+
+    for(let other of emitters){
+      if(other == this) continue;
+      let d1 = p5.Vector.dist(other.position, nearest.position);
+      let d2 = p5.Vector.dist(other.position, this.position);
+      if (d1 < EMITTER_MARGIN && d1 < d2) {
+        moving_closer = true;
+        break;
+      }
+    }
+
+    if(!moving_closer){
+      this.position = nearest.position.copy();
+      if(nearest.major && this.attractor){
+        this.attractor.radius = 20;
+      } else {
+        this.attractor.radius = 2;
+      }
+    }
+  }
+
   draw() {
     let palette_idx = palette.groups[2][1];
     let c = palette.colours[palette_idx];
     fill(c);
     noStroke();
     ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2);
+  }
+}
+
+function attach_emitters(){
+  for(let emitter of emitters){
+    emitter.attach_hotspot();
+  }
+}
+
+function create_hotspot_emitters(){
+  for(let hotspot of hotspots){
+    hotspot.create_emitter();
   }
 }
 

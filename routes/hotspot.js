@@ -27,12 +27,43 @@ class Hotspot {
     this.centroid = createVector(sumX / this.points.length, sumY / this.points.length);
   }
 
+  create_emitter(){
+    if(this.count == 0 || this.emitter ) { return }
+    if(below_water_level(this.position)) { return }
+
+    let nearest_dist = Infinity;
+    for(let other of emitters){
+      let d = p5.Vector.dist(other.position, this.position);
+      if(d < nearest_dist){
+        nearest_dist = d;
+      }
+    }
+
+    if(nearest_dist < EMITTER_MARGIN ) { return }
+
+    let r = this.major ? 20 : 2;
+    let emitter = new Emitter(this.position.x, this.position.y);
+    let attractor = new Attractor(this.position.x, this.position.y, r);
+
+    emitter.hotspot = this;
+    emitter.attractor = attractor;
+
+    emitters.push(emitter);
+
+    this.emitter = emitter;
+
+  }
+
   draw(){
     if(this.centroid === undefined) { return }
     noStroke();
     fill(stroke_colour);
     ellipse(this.centroid.x, this.centroid.y, CSW + 2);
   }
+}
+
+function find_hotspot(id){
+  return hotspots.find(h => h.id === id);
 }
 
 
@@ -77,17 +108,7 @@ function mergeHotspotGroup(group) {
 }
 
 
-function extract_points(){
-  let points = [];
 
-  for(let journey of filtered_journeys){
-    for (let i = 0; i < journey.path.length; i++) {
-      points.push(journey.path[i].copy());
-    }
-  }
-
-  return points;
-}
 
 
 let hotspot_grid;
@@ -134,145 +155,12 @@ function generateHotspotsAndFlow() {
 
   attach_emitters();
   create_hotspot_emitters()
-  count_journeys();
+  aggregate_journeys();
   connection_statistics();
 
-  chains = groupChains(connections, hotspots);
+  chains = create_chains(connections, hotspots);
 
   
-}
-
-function attach_emitters(){
-  for(let emitter of emitters){
-    let nearest  = null;
-    let nearest_dist = Infinity;
-    for(let hotspot of hotspots) {
-      let d = p5.Vector.dist(hotspot.centroid, emitter.position);
-      if (d < nearest_dist) {
-        nearest_dist = d;
-        nearest = hotspot;
-        if(d < hotspot.nearest_emitter_distance){
-          hotspot.nearest_emitter_distance = d;
-        }
-      }
-    }
-
-    if(nearest_dist < EMITTER_MARGIN){
-      nearest.emitter = emitter;
-      emitter.hotspot = nearest;
-      
-      let moving_closer = false;
-
-      for(let other of emitters){
-        if(other == emitter) continue;
-        let d1 = p5.Vector.dist(other.position, nearest.position);
-        let d2 = p5.Vector.dist(other.position, emitter.position);
-        if (d1 < EMITTER_MARGIN && d1 < d2) {
-          moving_closer = true;
-          break;
-        }
-      }
-
-      if(!moving_closer){
-        emitter.position = nearest.centroid.copy();
-        if(nearest.major && emitter.attractor){
-          emitter.attractor.radius = 20;
-        } else {
-          emitter.attractor.radius = 2;
-        }
-      }
-    }
-  }
-}
-
-function create_hotspot_emitters(){
-  for(let hotspot of hotspots){
-    if(hotspot.count > 1 && !hotspot.emitter ) {
-      if(below_water_level(hotspot.position)) { continue; }
-
-      let nearest_dist = Infinity;
-      for(let other of emitters){
-        let d = p5.Vector.dist(other.position, hotspot.centroid);
-        if(d < nearest_dist){
-          nearest_dist = d;
-        }
-      }
-
-      if(nearest_dist < EMITTER_MARGIN ) { continue; }
-      let r = hotspot.major ? 20 : 2;
-      let emitter = new Emitter(hotspot.position.x, hotspot.position.y);
-      let attractor = new Attractor(hotspot.position.x, hotspot.position.y, r);
-
-      emitter.hotspot = hotspot;
-      emitter.attractor = attractor;
-
-      emitters.push(emitter);
-
-      hotspot.emitter = emitter;
-
-    }
-  }
-}
-
-function count_journeys(){
-  for (let journey of filtered_journeys) {
-    let eA = journey.emitterA;
-    let eB = journey.emitterB;
-
-    for(let connection of connections){
-      let hA = hotspots[connection.from];
-      let hB = hotspots[connection.to];
-      if(hA.emitter == eA && hB.emitter == eB
-        || hA.emitter == eB && hB.emitter == eA){
-       
-        connection.journeys += journey.count;
-        break;
-      }
-    }
-  }
-}
-
-function connection_statistics(){
-  let journey_counts = [];
-  max_journey_count = 0;
-  for(let connection of connections){
-    journey_counts.push(connection.journeys);
-    if(connection.journeys > max_journey_count){
-      max_journey_count = connection.journeys;
-    }
-  }
-
-  for(let connection of connections){
-    connection.percentile = journey_percentiles(journey_counts, connection.journeys);
-  }
-
-}
-
-function journey_percentiles(arr, val) {
-  let count = 0;
-
-  for(let v of arr){
-    if (v < val) {
-      count++;
-    } else if (v == val) {
-      count += 0.5;
-    }
-  };
-
-  return 100 * count / arr.length;
-}
-
-function count_connections(){
-  for (let connection of connections) {
-    let from = connection.from;
-    let to = connection.to;
-    if (hotspots[from]) {
-      hotspots[from].count++;
-    }
-    if (hotspots[to]) {
-      hotspots[to].count++;
-    }
-  }
 }
 
 function refineNetwork(connections, minAngle, maxAngle) {
@@ -375,100 +263,11 @@ function split_edge(connections, edge, hotspot) {
 }
 
 
-let visited;
-let hotspotConnections = {};
 
-function groupChains(connections, hotspots) {
-  hotspotConnections = {};
-  for (let h of hotspots) {
-    hotspotConnections[h.id] = [];
-  }
-  for (let conn of connections) {
-    hotspotConnections[conn.from].push(conn);
-    hotspotConnections[conn.to].push(conn);
-  }
 
-  visited = new Set(); // Mark connections we've already processed.
-  let chains = [];
-
-  for (let h of hotspots) {
-    if (h.major) {
-      let conns = hotspotConnections[h.id];
-      for (let conn of conns) {
-        if (!visited.has(conn)) {
-          let chain = followChain(conn, h.id);
-          chains.push(chain);
-        }
-      }
-    }
-  }
-
-  for (let conn of connections) {
-    if (!visited.has(conn)) {
-      let chain = followChain(conn, conn.from);
-      chains.push(chain);
-    }
-  }
-
-  return chains;
-}
-
-// Helper function to follow a chain starting from a given hotspot along a connection.
-function followChain(startConn, startHotspot) {
-  let chainPoints = [];
-  let chainCount = 0;
-  let chainPercentile = 0;
-  let chainJourneys = 0;
-  let currentHotspot = startHotspot;
-  let currentConn = startConn;
-  // Start chain with the starting hotspot's centroid.
-  let startH = hotspots.find(h => h.id === currentHotspot);
-  if (startH) chainPoints.push(startH.centroid.copy());
-  
-  // Follow the chain:
-  while (true) {
-    visited.add(currentConn);
-    chainCount += currentConn.count;
-    chainPercentile += currentConn.percentile;
-    chainJourneys += currentConn.journeys;
-    // Determine the next hotspot (the one on the other end of the connection)
-    let nextHotspot = (currentConn.from === currentHotspot) ? currentConn.to : currentConn.from;
-    let nextH = hotspots.find(h => h.id === nextHotspot);
-    if (!nextH) break;
-
-    // TO DO push the points of the connection between the hotspots
-    chainPoints.push(nextH.centroid.copy());
-    
-    // If next hotspot is an endpoint (i.e. its connection count is not 2), or there’s no unvisited connection from it, stop.
-    if (nextH.count !== 2) break;
-    let nextConns = hotspotConnections[nextHotspot].filter(conn => !visited.has(conn));
-    if (nextConns.length === 0) break;
-    
-    // Otherwise, follow the single available unvisited connection.
-    currentConn = nextConns[0];
-    currentHotspot = nextHotspot;
-  }
-  return { points: chainPoints, count: chainCount, journeys: chainJourneys, percentile: chainPercentile / chainPoints.length };
-}
 
 let max_journey_count;
 
-function draw_chains() {
-  push()
-  for (let chain of chains) {
-    
-    strokeWeight(4);
-    noFill();
-    stroke(stroke_colour);
-    beginShape();
-      curveVertex(chain.points[0].x, chain.points[0].y);
-      for (let pt of chain.points) {
-        curveVertex(pt.x, pt.y);
-      }
-      curveVertex(chain.points[chain.points.length-1].x, chain.points[chain.points.length-1].y);
-    endShape();
-  }
-  pop()
-}
+
 
 

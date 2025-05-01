@@ -195,55 +195,77 @@ function update_slimeagents(){
 
 
 function draw_slimeagents() {
+  if(!show_slime) return;
+  if(!enable_slimeagents) return;
+  
+  push()
   for (let slimeagent of slimeagents) {
-    if(show_slime){
-      slimeagent.draw();
-    } 
+    slimeagent.draw();
   }
+  pop()
 }
 
 function draw_journeys() {
   if(hotspots.length > 0) return;
   
+  push()
   for (let journey of filtered_journeys) {
     journey.draw();
   }
+  pop()
 }
 
 function draw_hotspots() {
+  push()
   for (let hotspot of hotspots) {
     hotspot.draw();
   }
+  pop()
 }
 
 function draw_emitters() {
   if(!show_emitters) return;
 
+  push()
   for (let emitter of emitters) {
     emitter.draw();
   }
+  pop()
 }
 
 function draw_connections(){
+  push()
   for (let connection of connections) {
     connection.draw()
   }
+  pop()
+}
+
+function draw_chains() {
+  push()
+  for (let chain of chains) {
+    chain.draw();
+  }
+  pop()
 }
 
 function draw_attractors() {
   if(!debug) { return; }
-
+  push()
   for (let attractor of attractors) {
     attractor.draw();
   }
+  pop()
 }
 
 function draw_obstacles() {
   if(!show_obstacles) return;
 
+  push()
   for (let obstacle of obstacles) {
     obstacle.draw();
   }
+  pop()
 }
 
 function create_food(){

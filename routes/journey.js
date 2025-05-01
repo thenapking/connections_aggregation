@@ -23,6 +23,22 @@ class Journey {
     return aggregated_distances
   }
 
+  aggregate(){
+    let eA = this.emitterA;
+    let eB = this.emitterB;
+
+    for(let connection of connections){
+      let hA = hotspots[connection.from];
+      let hB = hotspots[connection.to];
+      if(hA.emitter == eA && hB.emitter == eB
+        || hA.emitter == eB && hB.emitter == eA){
+       
+        connection.journeys += this.count;
+        break;
+      }
+    }
+  }
+
   resample(path) {
     if (path.length < 2) return path.slice();
 
@@ -58,4 +74,22 @@ class Journey {
 
 function filter_journeys(){
   filtered_journeys = journeys.filter(conn => conn.count >= MIN_JOURNEYS_TO_DRAW);
+}
+
+function extract_points(){
+  let points = [];
+
+  for(let journey of filtered_journeys){
+    for (let i = 0; i < journey.path.length; i++) {
+      points.push(journey.path[i].copy());
+    }
+  }
+
+  return points;
+}
+
+function aggregate_journeys(){
+  for (let journey of filtered_journeys) {
+    journey.aggregate();
+  }
 }
