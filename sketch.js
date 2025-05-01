@@ -144,7 +144,7 @@ function draw() {
   push();
     draw_journeys();
     draw_hotspots();
-    // draw_chains(chains);
+    draw_chains(chains);
     draw_chains(minor_chains, "#ff0000");
     draw_chains(major_chains, "#00ff00");
     draw_slimeagents();

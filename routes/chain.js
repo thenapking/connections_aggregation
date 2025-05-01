@@ -45,8 +45,8 @@ function create_hotspot_connections(connections, hotspots) {
   }
 
   for (let connection of connections) {
-    hotspot_connections[connection.from].push(connection);
-    hotspot_connections[connection.to].push(connection);
+    hotspot_connections[connection.from.id].push(connection);
+    hotspot_connections[connection.to.id].push(connection);
   }
 
   return hotspot_connections;
@@ -92,7 +92,7 @@ function create_chain(hotspot_connections, connection, hotspot_id, visited) {
     chain.percentile += current_connection.percentile;
     chain.journeys += current_connection.journeys;
     
-    let next_hotspot_id = (current_connection.from === current_hotspot_id) ? current_connection.to : current_connection.from;
+    let next_hotspot_id = (current_connection.from.id === current_hotspot_id) ? current_connection.to.id : current_connection.from.id;
     let next_hotspot = find_hotspot(next_hotspot_id);
 
     // If next hotspot is not found then stop

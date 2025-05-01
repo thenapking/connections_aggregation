@@ -9,7 +9,7 @@ class SequenceGenerator {
 
   initialize() {
     for (let hotspot of this.hotspots) {
-      this.id_to_hotspot[hotspot.id] = { hotspot: hotspot, counts: [0, 0, 0, 0, 0] };
+      this.id_to_hotspot[hotspot.id] = { hotspot: hotspot };
     }
 
     for (let traj of this.trajectories) {
@@ -35,14 +35,7 @@ class SequenceGenerator {
           }
         }
       }
-      // I think this, and the whole counts thing is not needed
       if (cell_id != prev_cell) {
-        let m_val = point.m || 0;
-        let t = new Date((m_val + 8 * 3600) * 1000);
-        let h = t.getHours();
-        let quarter = Math.floor(h / 6);
-        this.id_to_hotspot[cell_id].counts[0] += 1;
-        this.id_to_hotspot[cell_id].counts[quarter + 1] += 1;
         sequence.push(cell_id);
       }
     }
@@ -66,18 +59,18 @@ class SequenceGenerator {
     for (let key in this.sequences) {
       if (this.sequences.hasOwnProperty(key)) {
         let parts = key.split(",");
-        let from = parts[0];
-        let to = parts[1];
+        let from_id = int(parts[0]);
+        let to_id = int(parts[1]);
 
        
 
-        let from_hotspot = this.id_to_hotspot[from].hotspot;
-        let to_hotspot = this.id_to_hotspot[to].hotspot;
+        let from_hotspot = find_hotspot(from_id);
+        let to_hotspot = find_hotspot(to_id);
 
         if (this.intersectsObstacle(from_hotspot, to_hotspot)) { continue }
 
         let geometry = [from_hotspot.centroid.copy(), to_hotspot.centroid.copy()];
-        let connection = new Connection(parseInt(from), parseInt(to), geometry, 0, this.sequences[key]);
+        let connection = new Connection(from_hotspot, to_hotspot, geometry, 0, this.sequences[key]);
         connections.push(connection);
       }
     }
