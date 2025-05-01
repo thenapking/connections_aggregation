@@ -157,7 +157,7 @@ function draw() {
   }
 
   if(update_fixtures && enable_slimeagents){
-    generateHotspotsAndFlow();
+    create_hotspots();
     if(t % (interval * 4) == 0){
       remove_intersecting_agents();
       create_emitters_from_foodlayer()
@@ -197,7 +197,7 @@ function update_slimeagents(){
 function draw_slimeagents() {
   if(!show_slime) return;
   if(!enable_slimeagents) return;
-  
+
   push()
   for (let slimeagent of slimeagents) {
     slimeagent.draw();

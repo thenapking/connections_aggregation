@@ -112,10 +112,14 @@ function mergeHotspotGroup(group) {
 
 
 let hotspot_grid;
-function generateHotspotsAndFlow() {
+let minor_hotspots = [];
+let major_hotspots = [];
+
+
+function create_hotspots() {
   filter_journeys();
 
-  let points = extract_points();
+  let points = extract_journey_points();
 
   let hotspot_grid = new HotspotGrid();
   hotspot_grid.insert(points);
@@ -157,11 +161,31 @@ function generateHotspotsAndFlow() {
   create_hotspot_emitters()
   aggregate_journeys();
   connection_statistics();
+  create_hotspot_connections(connections, hotspots)
 
+  attach_major_hotspots(160)
   chains = create_chains(connections, hotspots);
 
   
 }
+
+function attach_major_hotspots(max_dist) {
+  for(let major_hotspot of major_hotspots) {
+    let nearest = null;
+    let nearest_dist = Infinity;
+    for(let minor_hotspot of minor_hotspots) {
+      let d = p5.Vector.dist(major_hotspot.centroid, minor_hotspot.centroid);
+      if (d < nearest_dist && d < max_dist) {
+        nearest_dist = d;
+        nearest = minor_hotspot;
+      }
+    }
+    if (nearest) {
+      nearest.nearest_major_hotspot_id = major_hotspot.id;
+    }
+  }
+}
+
 
 function refineNetwork(connections, minAngle, maxAngle) {
   let new_connections = connections.slice();

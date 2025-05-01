@@ -76,7 +76,7 @@ function filter_journeys(){
   filtered_journeys = journeys.filter(conn => conn.count >= MIN_JOURNEYS_TO_DRAW);
 }
 
-function extract_points(){
+function extract_journey_points(){
   let points = [];
 
   for(let journey of filtered_journeys){
