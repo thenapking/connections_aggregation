@@ -114,7 +114,13 @@ function mergeHotspotGroup(group) {
 let hotspot_grid;
 let minor_hotspots = [];
 let major_hotspots = [];
-
+let major_chains = [];
+let minor_chains = [];
+let minor_connections = [];
+let major_connections = [];
+let minor_seq
+let major_seq
+let seqGen;
 
 function create_hotspots() {
   filter_journeys();
@@ -134,12 +140,11 @@ function create_hotspots() {
 
   hotspots = major_hotspots.concat(minor_hotspots);
 
-  
+  hotspots = mergeCloseHotspots(hotspots, 20);
 
 
   for (let i = 0; i < hotspots.length; i++) {
     hotspots[i].id = i;
-    hotspots[i].geometry = hotspots[i].centroid.copy();
   }
 
   
@@ -149,22 +154,36 @@ function create_hotspots() {
     trajectories.push(journey.path);
   }
 
-  let seqGen = new SequenceGenerator(hotspots, trajectories, null);
+  seqGen = new SequenceGenerator(hotspots, trajectories);
   connections = seqGen.create_connections();
+
+  // this is not working
+  // it generates no sequences
+  minor_seq = new SequenceGenerator(minor_hotspots, trajectories);
+  minor_connections = minor_seq.create_connections();
+  major_seq = new SequenceGenerator(major_hotspots, trajectories);
+  major_connections = major_seq.create_connections();
   
   count_connections()
 
   
   connections = refineNetwork(connections);
+  minor_connections = refineNetwork(minor_connections);
+  major_connections = refineNetwork(major_connections);
 
-  attach_emitters();
-  create_hotspot_emitters()
-  aggregate_journeys();
-  connection_statistics();
-  create_hotspot_connections(connections, hotspots)
+  // attach_emitters();
+  // create_hotspot_emitters()
+  // aggregate_journeys();
+  // connection_statistics();
+  let hotspot_connections = create_hotspot_connections(connections, hotspots)
+  // let minor_hotspot_connections = create_hotspot_connections(minor_connections, minor_hotspots)
+  // let major_hotspot_connections = create_hotspot_connections(major_connections, major_hotspots)
 
   attach_major_hotspots(160)
-  chains = create_chains(connections, hotspots);
+
+  // minor_chains = create_chains(minor_hotspot_connections, minor_connections, minor_hotspots);
+  // major_chains = create_chains(major_hotspot_connections, major_connections, major_hotspots);
+  chains = create_chains(hotspot_connections, connections, hotspots);
 
   
 }
