@@ -97,7 +97,11 @@ class Agent {
     for (let other of agents) {
       if (other !== this) {
         let d = p5.Vector.dist(this.position, other.position);
-        if (d < (this.radius + other.radius + 0.01)*AGENT_MARGIN_FACTOR) { 
+        let col = constrain(floor(this.position.x / (resolution * u)), 0 , cols - 1);
+        let row = constrain(floor(this.position.y / (resolution * u)), 0 , rows - 1);
+        let v = values[col][row];
+        let factor = map(v, 0, 1, AGENT_MARGIN_FACTOR/8, AGENT_MARGIN_FACTOR*2);
+        if (d < (this.radius + other.radius + 0.01)*factor) { 
           let diff = p5.Vector.sub(this.position, other.position);
           diff.normalize();
           diff.div(d);

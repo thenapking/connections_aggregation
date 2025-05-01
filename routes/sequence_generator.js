@@ -2,16 +2,11 @@ class SequenceGenerator {
   constructor(hotspots, trajectories) {
     this.hotspots = hotspots;
     this.trajectories = trajectories;
-    this.id_to_hotspot = {};
     this.sequences = {};
     this.initialize();
   }
 
   initialize() {
-    for (let hotspot of this.hotspots) {
-      this.id_to_hotspot[hotspot.id] = { hotspot: hotspot };
-    }
-
     for (let traj of this.trajectories) {
       this.evaluate_trajectory(traj);
     }
