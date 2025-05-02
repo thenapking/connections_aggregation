@@ -28,7 +28,7 @@ class Hotspot {
   }
 
   create_emitter(){
-    if(this.count == 0 || this.emitter ) { return }
+    // if(this.count == 0 || this.emitter ) { return }
     if(below_water_level(this.position)) { return }
 
     let nearest_dist = Infinity;
@@ -59,7 +59,7 @@ class Hotspot {
     noStroke();
     fill(stroke_colour);
     if(this.nearest_major_hotspot_id) { fill(255, 0, 0)}
-    let sz = this.nearest_major_hotspot_id ? CSW * 4 : CSW + 2
+    let sz = this.nearest_major_hotspot_id ? CSW * 8 : CSW + 2
     ellipse(this.centroid.x, this.centroid.y, sz);
   }
 }
@@ -91,12 +91,10 @@ function mergeCloseHotspots(hotspots, min_distance) {
 
 function mergeHotspotGroup(group) {
   let sumX = 0, sumY = 0, totalPoints = 0;
-  let count = 0;
   for (let h of group) {
     sumX += h.centroid.x * h.points.length;
     sumY += h.centroid.y * h.points.length;
     totalPoints += h.points.length;
-    count = Math.max(count, h.count);
   }
   let newCentroid = createVector(sumX / totalPoints, sumY / totalPoints);
   let hotspot = new Hotspot(newCentroid);
@@ -105,7 +103,6 @@ function mergeHotspotGroup(group) {
     hotspot.points = hotspot.points.concat(h.points);
   }
   hotspot.recompute_centroid();
-  hotspot.count = count;
   return hotspot;
 }
 
@@ -136,22 +133,15 @@ function create_hotspots() {
   major_hotspots = mergeCloseHotspots(hotspots, 160);
   minor_hotspots = mergeCloseHotspots(hotspots, 20);
 
-  for(let hotspot of major_hotspots){
-    hotspot.major = true;
+  for(let i = 0; i < minor_hotspots.length; i++){
+    minor_hotspots[i].id = i
   }
 
   for(let i = 0; i < major_hotspots.length; i++){
-    major_hotspots[i].id = i;
+    major_hotspots[i].id = i 
   }
 
-  for(let i = 0; i < minor_hotspots.length; i++){
-    minor_hotspots[i].id = i + major_hotspots.length;
-  }
-
-  hotspots = major_hotspots.concat(minor_hotspots);
-
-
-  // hotspots = mergeCloseHotspots(hotspots, 20);
+  hotspots = minor_hotspots
 
 
   
@@ -166,32 +156,20 @@ function create_hotspots() {
   seqGen = new SequenceGenerator(hotspots, trajectories);
   connections = seqGen.create_connections();
 
-  // this is not working
-  // it generates no sequences
-  minor_seq = new SequenceGenerator(minor_hotspots, trajectories);
-  minor_connections = minor_seq.create_connections();
-  major_seq = new SequenceGenerator(major_hotspots, trajectories);
-  major_connections = major_seq.create_connections();
   
   count_connections()
 
   
   connections = refineNetwork(connections);
-  minor_connections = refineNetwork(minor_connections);
-  major_connections = refineNetwork(major_connections);
 
-  // attach_emitters();
-  // create_hotspot_emitters()
-  // aggregate_journeys();
-  // connection_statistics();
+  attach_emitters();
+  create_hotspot_emitters()
+  aggregate_journeys();
+  connection_statistics();
   let hotspot_connections = create_hotspot_connections(connections, hotspots)
-  let minor_hotspot_connections = create_hotspot_connections(minor_connections, minor_hotspots)
-  let major_hotspot_connections = create_hotspot_connections(major_connections, major_hotspots)
 
   attach_major_hotspots(160)
 
-  minor_chains = create_chains(minor_hotspot_connections, minor_connections, minor_hotspots);
-  major_chains = create_chains(major_hotspot_connections, major_connections, major_hotspots);
   chains = create_chains(hotspot_connections, connections, hotspots);
 
   
@@ -202,6 +180,7 @@ function attach_major_hotspots(max_dist) {
     let nearest = null;
     let nearest_dist = Infinity;
     for(let hotspot of hotspots) {
+      if(hotspot.count < 3) continue;
       let d = p5.Vector.dist(major_hotspot.centroid, hotspot.centroid);
       if (d < nearest_dist && d < max_dist) {
         nearest_dist = d;
@@ -210,6 +189,7 @@ function attach_major_hotspots(max_dist) {
     }
     if (nearest) {
       nearest.nearest_major_hotspot_id = major_hotspot.id;
+      nearest.major = true;
       // console.log("Attached major hotspot", major_hotspot.id, "to", nearest.id);
     }
   }

@@ -5,8 +5,6 @@ class Chain {
     this.journeys = 0;
     this.percentile = 0;
     this.length = this.points.length - 1
-    this.start_major_hotspot = null;
-    this.end_major_hotspot = null;
     this.major = false;
   }
 
@@ -15,13 +13,10 @@ class Chain {
     this.length++;
   }
 
-  draw(colour){
+  draw(){
     strokeWeight(4);
-
     noFill();
-    colour = colour || stroke_colour;
-    stroke(colour);
-    if(this.major){ stroke(0,200,100); }
+    stroke(stroke_colour);
     beginShape();
       curveVertex(this.points[0].x, this.points[0].y);
       for (let point of this.points) {
@@ -84,13 +79,14 @@ function create_chain(hotspot_connections, connection, hotspot_id, visited) {
   if (!current_hotspot) { return };
 
   let chain = new Chain([current_hotspot.centroid.copy()]);
-  chain.start_major_hotspot = current_hotspot.nearest_major_hotspot_id;
+  let major_hotspot_count = 0;
   
   while (chain.points.length < MAX_CHAIN_LENGTH) {
     visited.add(current_connection);
     chain.count += current_connection.count;
     chain.percentile += current_connection.percentile;
     chain.journeys += current_connection.journeys;
+    if(current_hotspot.major) major_hotspot_count++;
     
     let next_hotspot_id = (current_connection.from.id === current_hotspot_id) ? current_connection.to.id : current_connection.from.id;
     let next_hotspot = find_hotspot(next_hotspot_id);
@@ -100,7 +96,7 @@ function create_chain(hotspot_connections, connection, hotspot_id, visited) {
     chain.add(next_hotspot.centroid.copy());
 
     // If next hotspot is an endpoint then stop
-    if (next_hotspot.count !== 2) break;
+    if (next_hotspot.count < 2) break;
 
     // If next hotspot is already visited then stop
     let next_connections = hotspot_connections[next_hotspot_id].filter(c => !visited.has(c));
@@ -111,7 +107,6 @@ function create_chain(hotspot_connections, connection, hotspot_id, visited) {
   }
 
   chain.percentile = chain.percentile / (chain.length - 1);
-  chain.end_major_hotspot = current_hotspot.nearest_major_hotspot_id;
-  if(chain.start_major_hotspot && chain.end_major_hotspot) { chain.major = true; }
+  if(major_hotspot_count > 2) { chain.major = true; }
   return chain
 }
