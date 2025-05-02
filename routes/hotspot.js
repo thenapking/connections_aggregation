@@ -8,6 +8,7 @@ class Hotspot {
     this.major = false;
     this.emitter = null;
     this.nearest_emitter_distance = Infinity;
+    this.nearest_major_hotspot = null;
   }
 
   add_point(pt) {
@@ -58,8 +59,8 @@ class Hotspot {
     if(this.centroid === undefined) { return }
     noStroke();
     fill(stroke_colour);
-    if(this.nearest_major_hotspot_id) { fill(255, 0, 0)}
-    let sz = this.nearest_major_hotspot_id ? CSW * 4 : CSW + 2
+    if(this.nearest_major_hotspot) { fill(255, 0, 0)}
+    let sz = this.nearest_major_hotspot ? CSW * 8 : CSW + 2
     ellipse(this.centroid.x, this.centroid.y, sz);
   }
 }
@@ -134,7 +135,7 @@ function create_hotspots() {
 
   hotspots = hotspot_grid.resulting_groups;
   major_hotspots = mergeCloseHotspots(hotspots, 160);
-  minor_hotspots = mergeCloseHotspots(hotspots, 160);
+  minor_hotspots = mergeCloseHotspots(hotspots, 20);
 
   for(let hotspot of major_hotspots){
     hotspot.major = true;
@@ -150,12 +151,6 @@ function create_hotspots() {
 
   hotspots = major_hotspots.concat(minor_hotspots);
 
-
-  // hotspots = mergeCloseHotspots(hotspots, 20);
-
-
-  
-
   
   let trajectories = [];
 
@@ -166,26 +161,17 @@ function create_hotspots() {
   seqGen = new SequenceGenerator(hotspots, trajectories);
   connections = seqGen.create_connections();
 
-  // this is not working
-  // it generates no sequences
-  minor_seq = new SequenceGenerator(minor_hotspots, trajectories);
-  minor_connections = minor_seq.create_connections();
   major_seq = new SequenceGenerator(major_hotspots, trajectories);
-  major_connections = major_seq.create_connections();
+  major_connections = major_seq.create_connections(false);
   
   count_connections()
 
-  
-  connections = refineNetwork(connections);
-  minor_connections = refineNetwork(minor_connections);
-  major_connections = refineNetwork(major_connections);
+  console.log("Minor Connections before: ", connections.length);
+  connections = refineNetwork(connections, hotspots);
+  console.log("Minor Connections after: ", connections.length);
 
-  // attach_emitters();
-  // create_hotspot_emitters()
-  // aggregate_journeys();
-  // connection_statistics();
+
   let hotspot_connections = create_hotspot_connections(connections, hotspots)
-  let minor_hotspot_connections = create_hotspot_connections(minor_connections, minor_hotspots)
   let major_hotspot_connections = create_hotspot_connections(major_connections, major_hotspots)
 
   attach_major_hotspots(160)
@@ -197,11 +183,17 @@ function create_hotspots() {
   
 }
 
+  // attach_emitters();
+  // create_hotspot_emitters()
+  // aggregate_journeys();
+  // connection_statistics();
+
 function attach_major_hotspots(max_dist) {
   for(let major_hotspot of major_hotspots) {
     let nearest = null;
     let nearest_dist = Infinity;
     for(let hotspot of hotspots) {
+      if(hotspot.count < 3) { continue; }
       let d = p5.Vector.dist(major_hotspot.centroid, hotspot.centroid);
       if (d < nearest_dist && d < max_dist) {
         nearest_dist = d;
@@ -209,28 +201,31 @@ function attach_major_hotspots(max_dist) {
       }
     }
     if (nearest) {
-      nearest.nearest_major_hotspot_id = major_hotspot.id;
-      // console.log("Attached major hotspot", major_hotspot.id, "to", nearest.id);
+      nearest.nearest_major_hotspot = major_hotspot;
+      major_hotspot.centroid = nearest.centroid.copy();
+      major_hotspot.position = nearest.position.copy();
     }
   }
 }
 
-
-function refineNetwork(connections) {
+// THis code no longer works
+function refineNetwork(connections, hotspots) {
   let new_connections = connections.slice();
   let iterations = 0;
   let maxIterations = 3;
   let changed = true;
   let nextNodeId = hotspots.length;
+
   while (changed && iterations < maxIterations) {
     changed = false;
     let nodes = getNodesFromFlowLines(new_connections);
+
     for (let node of nodes) {
       let edges = getEdgesForNode(node, new_connections);
       if (edges.length < 2) continue;
       let edgeAngles = [];
       for (let edge of edges) {
-        let v = p5.Vector.sub(edge.other, node.pos);
+        let v = p5.Vector.sub(edge.other, node.position);
         let angle = degrees(v.heading());
         if (angle < 0) angle += 360;
         edgeAngles.push({ edge: edge, angle: angle });
@@ -268,34 +263,34 @@ function getNodesFromFlowLines(new_connections) {
   let nodes = [];
   let tolerance = 0.001;
   for (let connection of new_connections) {
-    if(!connection.geometry) continue;
-    let ptA = connection.geometry[0];
-    let ptB = connection.geometry[1];
+    let ptA = connection.from
+    let ptB = connection.to
     addNode(ptA, nodes, tolerance);
     addNode(ptB, nodes, tolerance);
   }
   return nodes;
 }
 
-function addNode(pt, nodes, tol) {
+function addNode(hotspot, nodes, tol) {
   for (let node of nodes) {
-    if (p5.Vector.dist(pt, node.pos) < tol) return;
+    if (p5.Vector.dist(hotspot.position, node.position) < tol) return;
   }
-  nodes.push({ id: pt.id !== undefined ? pt.id : null, pos: pt.copy() });
+  nodes.push({ id: hotspot.id, position: hotspot.position.copy() });
 }
 
 function getEdgesForNode(node, connections) {
   let edges = [];
   let tol = 0.001;
   for (let connection of connections) {
-    let a = connection.geometry[0];
-    let b = connection.geometry[1];
-    if (p5.Vector.dist(node.pos, a) < tol) {
-      edges.push({ node: a.copy(), other: b.copy(), connection: connection });
-    } else if (p5.Vector.dist(node.pos, b) < tol) {
-      edges.push({ node: b.copy(), other: a.copy(), connection: connection });
+    let a = connection.from
+    let b = connection.to
+    if (p5.Vector.dist(node.position, a.position) < tol) {
+      edges.push({ node: a.position.copy(), other: b.position.copy(), connection: connection });
+    } else if (p5.Vector.dist(node.position, b.position) < tol) {
+      edges.push({ node: b.position.copy(), other: a.position.copy(), connection: connection });
     }
   }
+  if(edges.count > 1) { console.log("Edges for node", node.id, ":", edges); }
   return edges;
 }
 
@@ -303,8 +298,8 @@ function split_edge(connections, edge, hotspot) {
   let new_connections = [];
   for (let connection of connections) {
     if (connection === edge.connection) {
-      let connection_a = new Connection(edge.connection.from, hotspot.id, [edge.node.copy(), hotspot.centroid.copy()], connection.key, edge.connection.count);
-      let connection_b = new Connection(hotspot.id, edge.connection.to, [hotspot.centroid.copy(), edge.other.copy()], connection.key, edge.connection.count);
+      let connection_a = new Connection(edge.connection.from, hotspot, [edge.node.copy(), hotspot.centroid.copy()], connection.key, edge.connection.count);
+      let connection_b = new Connection(hotspot, edge.connection.to, [hotspot.centroid.copy(), edge.other.copy()], connection.key, edge.connection.count);
 
       new_connections.push(connection_a);
       new_connections.push(connection_b);

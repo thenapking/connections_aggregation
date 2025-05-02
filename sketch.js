@@ -56,7 +56,7 @@ const MIN_JOURNEYS_TO_DRAW = 10;
 // because they cannot bend round them
 
 const MIN_HOTSPOT_DISTANCE = 10; 
-const MIN_CONNECTION_ANGLE = 50;
+const MIN_CONNECTION_ANGLE = 60;
 const MAX_CONNECTION_ANGLE = 120;
 const MIN_STROKE = 1;
 const MAX_STROKE = 50;
@@ -89,6 +89,7 @@ let seed;
 function setup() {
   seed = random(1000000);
   // seed = 348097.90726263414
+  seed = 973226.451118719
   randomSeed(seed);
   noiseSeed(seed);
   console.log("Seed: " + seed);
@@ -144,9 +145,9 @@ function draw() {
   push();
     // draw_journeys();
     draw_hotspots();
-    draw_chains(chains);
-    // draw_chains(minor_chains, "#ff0000");
-    // draw_chains(major_chains, "#00ff00");
+    // draw_chains();
+    draw_chains(chains, "#BBBBBB");
+    draw_chains(major_chains, palette.black);
     draw_slimeagents();
   pop();
 

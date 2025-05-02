@@ -49,7 +49,7 @@ class SequenceGenerator {
     return nearest;
   }
 
-  create_connections() {
+  create_connections(check_obstacles = true) {
     let connections = [];
     for (let key in this.sequences) {
       if (this.sequences.hasOwnProperty(key)) {
@@ -62,7 +62,7 @@ class SequenceGenerator {
         let from_hotspot = find_hotspot(from_id);
         let to_hotspot = find_hotspot(to_id);
 
-        if (this.intersectsObstacle(from_hotspot, to_hotspot)) { continue }
+        if (check_obstacles && this.intersectsObstacle(from_hotspot, to_hotspot)) { continue }
 
         let geometry = [from_hotspot.centroid.copy(), to_hotspot.centroid.copy()];
         let connection = new Connection(from_hotspot, to_hotspot, geometry, 0, this.sequences[key]);
@@ -73,6 +73,7 @@ class SequenceGenerator {
   }
 
   intersectsObstacle(from_hotspot, to_hotspot) {
+
     let A = from_hotspot.centroid.copy();
     let B = to_hotspot.centroid.copy();
 
