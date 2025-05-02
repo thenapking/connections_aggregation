@@ -5,6 +5,9 @@ class Chain {
     this.journeys = 0;
     this.percentile = 0;
     this.length = this.points.length - 1
+    this.start_major_hotspot = null;
+    this.end_major_hotspot = null;
+    this.major = false;
   }
 
   add(point){
@@ -14,8 +17,10 @@ class Chain {
 
   draw(){
     strokeWeight(4);
+
     noFill();
     stroke(stroke_colour);
+    if(this.major){ stroke(0,200,100); }
     beginShape();
       curveVertex(this.points[0].x, this.points[0].y);
       for (let point of this.points) {
@@ -30,7 +35,6 @@ class Chain {
 
 const MAX_CHAIN_LENGTH = 1000;
 
-let visited;
 let hotspot_connections = {};
 
 function create_hotspot_connections(connections, hotspots) {
@@ -47,16 +51,14 @@ function create_hotspot_connections(connections, hotspots) {
 }
 
 function create_chains(connections, hotspots) {
-  create_hotspot_connections(connections, hotspots);
-
-  visited = new Set(); 
+  let visited = new Set(); 
   let chains = [];
 
   for (let hotspot of hotspots) {
     let connections = hotspot_connections[hotspot.id];
     for (let connection of connections) {
       if (!visited.has(connection)) {
-        let chain = create_chain(connection, hotspot.id);
+        let chain = create_chain(connection, hotspot.id, visited);
         chains.push(chain);
       }
     }
@@ -64,7 +66,7 @@ function create_chains(connections, hotspots) {
 
   for (let connection of connections) {
     if (!visited.has(connection)) {
-      let chain = create_chain(connection, connection.from);
+      let chain = create_chain(connection, connection.from, visited);
       chains.push(chain);
     }
   }
@@ -72,7 +74,7 @@ function create_chains(connections, hotspots) {
   return chains;
 }
 
-function create_chain(connection, hotspot_id) {
+function create_chain(connection, hotspot_id, visited) {
   let current_connection = connection;
   let current_hotspot_id = hotspot_id;
   let current_hotspot = find_hotspot(current_hotspot_id);
@@ -80,6 +82,7 @@ function create_chain(connection, hotspot_id) {
   if (!current_hotspot) { return };
 
   let chain = new Chain([current_hotspot.centroid.copy()]);
+  chain.start_major_hotspot = current_hotspot.nearest_major_hotspot_id;
   
   while (chain.points.length < MAX_CHAIN_LENGTH) {
     visited.add(current_connection);
@@ -106,7 +109,7 @@ function create_chain(connection, hotspot_id) {
   }
 
   chain.percentile = chain.percentile / (chain.length - 1);
-
-
+  chain.end_major_hotspot = current_hotspot.nearest_major_hotspot_id;
+  if(chain.start_major_hotspot && chain.end_major_hotspot) { chain.major = true; }
   return chain
 }
