@@ -126,7 +126,7 @@ function create_hotspots() {
 
   hotspots = hotspot_grid.resulting_groups;
   major_hotspots = mergeCloseHotspots(hotspots, 160);
-  minor_hotspots = mergeCloseHotspots(hotspots, 20);
+  minor_hotspots = mergeCloseHotspots(hotspots, 160);
 
   for(let hotspot of major_hotspots){
     hotspot.major = true;
