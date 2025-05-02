@@ -160,24 +160,13 @@ function create_hotspots() {
 
   seqGen = new SequenceGenerator(hotspots, trajectories);
   connections = seqGen.create_connections();
-
-  major_seq = new SequenceGenerator(major_hotspots, trajectories);
-  major_connections = major_seq.create_connections(false);
   
   count_connections()
 
-  console.log("Minor Connections before: ", connections.length);
-  connections = refineNetwork(connections, hotspots);
-  console.log("Minor Connections after: ", connections.length);
-
-
   let hotspot_connections = create_hotspot_connections(connections, hotspots)
-  let major_hotspot_connections = create_hotspot_connections(major_connections, major_hotspots)
 
   attach_major_hotspots(160)
 
-  minor_chains = create_chains(minor_hotspot_connections, minor_connections, minor_hotspots);
-  major_chains = create_chains(major_hotspot_connections, major_connections, major_hotspots);
   chains = create_chains(hotspot_connections, connections, hotspots);
 
   
@@ -207,109 +196,6 @@ function attach_major_hotspots(max_dist) {
     }
   }
 }
-
-// THis code no longer works
-function refineNetwork(connections, hotspots) {
-  let new_connections = connections.slice();
-  let iterations = 0;
-  let maxIterations = 3;
-  let changed = true;
-  let nextNodeId = hotspots.length;
-
-  while (changed && iterations < maxIterations) {
-    changed = false;
-    let nodes = getNodesFromFlowLines(new_connections);
-
-    for (let node of nodes) {
-      let edges = getEdgesForNode(node, new_connections);
-      if (edges.length < 2) continue;
-      let edgeAngles = [];
-      for (let edge of edges) {
-        let v = p5.Vector.sub(edge.other, node.position);
-        let angle = degrees(v.heading());
-        if (angle < 0) angle += 360;
-        edgeAngles.push({ edge: edge, angle: angle });
-      }
-      edgeAngles.sort((a, b) => a.angle - b.angle);
-      for (let i = 0; i < edgeAngles.length; i++) {
-        let a1 = edgeAngles[i].angle;
-        let a2 = (i === edgeAngles.length - 1) ? (360 - a1 + edgeAngles[0].angle) : (edgeAngles[i + 1].angle - a1);
-        if (a1 < MIN_CONNECTION_ANGLE || a2 < MIN_CONNECTION_ANGLE || 
-            a1 > MAX_CONNECTION_ANGLE || a2 > MAX_CONNECTION_ANGLE) {
-          // For simplicity, choose the longer edge among the two adjacent ones
-          if(debug) { console.log("Splitting edge", edgeAngles[i].edge, "at angle", edgeAngles[i].angle); }
-          let edge1 = edgeAngles[i].edge;
-          let edge2 = edgeAngles[(i + 1) % edgeAngles.length].edge;
-          let len1 = p5.Vector.dist(edge1.node, edge1.other);
-          let len2 = p5.Vector.dist(edge2.node, edge2.other);
-          let edgeToSplit = (len1 >= len2) ? edge1 : edge2;
-          let mid = p5.Vector.add(edgeToSplit.node, edgeToSplit.other).mult(0.5);
-          let hotspot = new Hotspot(mid);
-          hotspot.id = nextNodeId++;
-          hotspots.push(hotspot);
-          new_connections = split_edge(new_connections, edgeToSplit, hotspot);
-          changed = true;
-          break;
-        }
-      }
-      if (changed) break;
-    }
-    iterations++;
-  }
-  return new_connections;
-}
-
-function getNodesFromFlowLines(new_connections) {
-  let nodes = [];
-  let tolerance = 0.001;
-  for (let connection of new_connections) {
-    let ptA = connection.from
-    let ptB = connection.to
-    addNode(ptA, nodes, tolerance);
-    addNode(ptB, nodes, tolerance);
-  }
-  return nodes;
-}
-
-function addNode(hotspot, nodes, tol) {
-  for (let node of nodes) {
-    if (p5.Vector.dist(hotspot.position, node.position) < tol) return;
-  }
-  nodes.push({ id: hotspot.id, position: hotspot.position.copy() });
-}
-
-function getEdgesForNode(node, connections) {
-  let edges = [];
-  let tol = 0.001;
-  for (let connection of connections) {
-    let a = connection.from
-    let b = connection.to
-    if (p5.Vector.dist(node.position, a.position) < tol) {
-      edges.push({ node: a.position.copy(), other: b.position.copy(), connection: connection });
-    } else if (p5.Vector.dist(node.position, b.position) < tol) {
-      edges.push({ node: b.position.copy(), other: a.position.copy(), connection: connection });
-    }
-  }
-  if(edges.count > 1) { console.log("Edges for node", node.id, ":", edges); }
-  return edges;
-}
-
-function split_edge(connections, edge, hotspot) {
-  let new_connections = [];
-  for (let connection of connections) {
-    if (connection === edge.connection) {
-      let connection_a = new Connection(edge.connection.from, hotspot, [edge.node.copy(), hotspot.centroid.copy()], connection.key, edge.connection.count);
-      let connection_b = new Connection(hotspot, edge.connection.to, [hotspot.centroid.copy(), edge.other.copy()], connection.key, edge.connection.count);
-
-      new_connections.push(connection_a);
-      new_connections.push(connection_b);
-    } else {
-      new_connections.push(connection);
-    }
-  }
-  return new_connections;
-}
-
 
 
 

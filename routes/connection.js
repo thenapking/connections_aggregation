@@ -17,6 +17,22 @@ class Connection {
   }
 }
 
+function create_hotspot_connections(connections, hotspots) {
+  let hotspot_connections = {};
+
+  for (let hotspot of hotspots) {
+    hotspot_connections[hotspot.id] = [];
+  }
+
+  for (let connection of connections) {
+    hotspot_connections[connection.from.id].push(connection);
+    hotspot_connections[connection.to.id].push(connection);
+  }
+
+  return hotspot_connections;
+}
+
+
 function connection_statistics(){
   let journey_counts = [];
   max_journey_count = 0;
