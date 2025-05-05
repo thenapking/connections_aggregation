@@ -1,11 +1,20 @@
 class Connection {
-  constructor(from, to, geometry, count, key) {
+  constructor(from, to, geometry, count, key, previous_direction) {
     this.from = from;
     this.to = to;
     this.squence_key = key;
     this.count = count;
     this.journeys = 0;
     this.percentile = 0;
+
+    this.v = this.to.position.copy().sub(this.from.position);
+    this.dist = this.v.mag();
+    this.direction = this.v.heading();
+    this.previous_direction = previous_direction || this.direction;
+    this.turn = abs(((this.direction - this.previous_direction + PI) % TWO_PI) - PI);
+    this.intersects_self = connections.some(e => intersects(e.from.position, e.to.position, from.position, to.position));
+    this.valid_direction = this.turn <= MAX_TURN;
+    this.valid = this.valid_direction && !this.intersects_self;
   }
 
   draw(){

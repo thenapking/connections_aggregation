@@ -29,10 +29,10 @@ class SlimeAgent {
   }
 
   edges(){
-    if (this.position.x < 0) { this.position.x = 0; this.angle = PI - this.angle; }
-    if (this.position.x > w) { this.position.x = w; this.angle = PI - this.angle; }
-    if (this.position.y < 0) { this.position.y = 0; this.angle = -this.angle; }
-    if (this.position.y > h) { this.position.y = h; this.angle = -this.angle; }
+    if (this.position.x <     HOTSPOT_MARGIN) { this.position.x =     HOTSPOT_MARGIN; this.angle = PI - this.angle; }
+    if (this.position.x > w - HOTSPOT_MARGIN) { this.position.x = w - HOTSPOT_MARGIN; this.angle = PI - this.angle; }
+    if (this.position.y <     HOTSPOT_MARGIN) { this.position.y =     HOTSPOT_MARGIN; this.angle = -this.angle; }
+    if (this.position.y > h - HOTSPOT_MARGIN) { this.position.y = h - HOTSPOT_MARGIN; this.angle = -this.angle; }
     let col = constrain(floor(this.position.x / (resolution * u)), 0 , cols - 1);
     let row = constrain(floor(this.position.y / (resolution * u)), 0 , rows - 1);
     let v = values[col][row];

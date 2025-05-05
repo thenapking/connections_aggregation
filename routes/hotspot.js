@@ -9,6 +9,16 @@ class Hotspot {
     this.emitter = null;
     this.nearest_emitter_distance = Infinity;
     this.nearest_major_hotspot = null;
+    this.flagged = false;
+    this.outside = false;
+    this.edges();
+  }
+
+  edges(){
+    if(this.position.x < HOTSPOT_MARGIN || this.position.x > width - HOTSPOT_MARGIN ||
+       this.position.y < HOTSPOT_MARGIN || this.position.y > height - HOTSPOT_MARGIN){
+      this.outside = true;  
+    }
   }
 
   add_point(pt) {
@@ -26,10 +36,12 @@ class Hotspot {
       sumY += pt.y;
     }
     this.centroid = createVector(sumX / this.points.length, sumY / this.points.length);
+    this.edges();
   }
 
   create_emitter(){
     if(this.count == 0 || this.emitter ) { return }
+    if(this.outside) { return }
     if(below_water_level(this.position)) { return }
 
     let nearest_dist = Infinity;
@@ -56,6 +68,9 @@ class Hotspot {
   }
 
   draw(){
+    if(this.flagged) { return }
+    if(this.outside) { return }
+
     if(this.centroid === undefined) { return }
     noStroke();
     fill(stroke_colour);
@@ -134,6 +149,8 @@ function create_hotspots() {
   hotspot_grid.insert(points);
 
   hotspots = hotspot_grid.resulting_groups;
+  
+
   major_hotspots = mergeCloseHotspots(hotspots, 160);
   minor_hotspots = mergeCloseHotspots(hotspots, 20);
 
@@ -160,6 +177,8 @@ function create_hotspots() {
 
   seqGen = new SequenceGenerator(hotspots, trajectories);
   connections = seqGen.create_connections();
+
+  connections = refineNetwork(connections, hotspots);
   
   count_connections()
 
@@ -169,7 +188,6 @@ function create_hotspots() {
 
   chains = create_chains(hotspot_connections, connections, hotspots);
 
-  
 }
 
   // attach_emitters();

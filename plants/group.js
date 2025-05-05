@@ -68,6 +68,9 @@ class Group {
     this.export();
 
     this.active = true;
+
+    this.id = groups.length;
+    this.k = K;
   }
 
   
@@ -252,6 +255,11 @@ class Group {
       for (let agent of this.agents) {
         agent.draw();
       }
+    }
+
+    if(this.enableSeparation){
+      fill(palette.black)
+      circle(this.position.x, this.position.y, 30);
     }
     pop();
   }

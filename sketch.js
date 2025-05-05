@@ -31,6 +31,7 @@ let foodLayer;
 const EMITTER_MARGIN = 30;
 const OBSTACLE_MARGIN = 20; // distance between obstacles
 const OBSTACLE_SPACING = 5; // distance between hotspots and obstacles
+const HOTSPOT_MARGIN = 20; // distance between border and hotspots
 const AGENT_MARGIN_FACTOR = 8;
 const AGENT_OBSTACLE_FACTOR = 1;
 
@@ -144,10 +145,11 @@ function draw() {
   
   push();
     // draw_journeys();
-    draw_hotspots();
     // draw_chains();
     draw_chains(chains, "#BBBBBB");
-    draw_chains(major_chains, palette.black);
+    // draw_chains(major_chains, palette.black);
+    draw_hotspots();
+
     draw_slimeagents();
   pop();
 
@@ -161,6 +163,7 @@ function draw() {
 
   if(update_fixtures && enable_slimeagents){
     create_hotspots();
+    build_tube_network();
     if(t % (interval * 4) == 0){
       remove_intersecting_agents();
       create_emitters_from_foodlayer()
@@ -244,10 +247,16 @@ function draw_connections(){
   pop()
 }
 
-function draw_chains(chains, colour) {
+function draw_chains(chains) {
   push()
   for (let chain of chains) {
-    chain.draw(colour);
+    let c = palette.black
+    if(chain.line_id >= 0) {
+      let hue = map(chain.line_id, 0, MAX_LINE_ID, 0, 360);
+
+      c = color(hue, 100, 100)
+    }
+    chain.draw(c);
   }
   pop()
 }
@@ -309,6 +318,10 @@ function mousePressed() {
     groupSettings
   )
   groups.push(group);
+  group.id = groups.length - 1;
+  console.log("group: ", group.id, "created at: ", position.x, position.y)
+  console.log(groupSettings)
+
 }
 
 

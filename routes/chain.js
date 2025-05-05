@@ -1,13 +1,14 @@
 class Chain {
-  constructor(points) {
+  constructor(points, group_id, line_id) {
     this.points = points;
     this.count = 0;
     this.journeys = 0;
     this.percentile = 0;
     this.length = this.points.length - 1
     this.major = false
+    this.group_id = group_id  || -1;
+    this.line_id = line_id || -1;
   }
-
   add(point){
     this.points.push(point);
     this.length++;
@@ -19,34 +20,16 @@ class Chain {
 
     noFill();
     beginShape();
-      // curveVertex(this.points[0].x, this.points[0].y);
       for (let point of this.points) {
         vertex(point.x, point.y);
       }
-      // curveVertex(this.points[this.length].x, this.points[this.length].y);
     endShape();
-  }
-
- 
+  } 
 }
 
 const MAX_CHAIN_LENGTH = 1000;
 
 
-function create_hotspot_connections(connections, hotspots) {
-  let hotspot_connections = {};
-
-  for (let hotspot of hotspots) {
-    hotspot_connections[hotspot.id] = [];
-  }
-
-  for (let connection of connections) {
-    hotspot_connections[connection.from.id].push(connection);
-    hotspot_connections[connection.to.id].push(connection);
-  }
-
-  return hotspot_connections;
-}
 
 function create_chains(hotspot_connections, connections, hotspots) {
   let visited = new Set(); 
