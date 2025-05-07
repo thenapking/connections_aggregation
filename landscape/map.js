@@ -9,6 +9,25 @@ function create_map(){
     // draw_hatching(WATER_LEVEL, max_threshold);  
   paper.pop()
 
+  
+  create_parks()
+
+  paper.push()
+    paper.scale(u);
+    paper.translate(bw, bw);
+    for(let park of parks){
+      park.draw();
+    }
+  paper.pop()
+
+  paper.push()
+    paper.translate(bw*u, bw*u);
+
+    for(let park of parks){
+      park.draw_hatching();      
+    }
+  paper.pop()
+
   paper.push()
     paper.scale(u);
     paper.translate(bw, bw);
@@ -20,6 +39,7 @@ function create_map(){
   paper.push()
     // paper_texture();
   paper.pop();
+
 }
 
 function draw_grid(){
@@ -95,7 +115,8 @@ const isoStep = 0.015;       // Contour step (0–1 scale)
 const noiseScale = 0.0005;    // Perlin noise scale (detail level)
 const resolution = 12;        // Grid cell size in pixels
 const simplifyTolerance = 0.1; // Tolerance for simplify-js (higher = smoother)
-const hatchingDensity = resolution * 4; // Density of hatching lines
+const hatchingMult = 4
+const hatchingDensity = resolution * hatchingMult; // Density of hatching lines
 let cols, rows; // Number of columns and rows in the grid
 let values = []; // 2D array to hold noise values 
 let grouped_values = {}; // Object to hold grouped noise values
@@ -231,15 +252,53 @@ function draw_hatching(low, high) {
 
 function draw_sea(low, high) {
   paper.stroke(paper_palette.black);
-  for (let x = 0; x < w/u - hatchingDensity; x += hatchingDensity) {
-    for (let y = 0; y < h/u - hatchingDensity; y += hatchingDensity) {
-      let i = floor(x / resolution);
-      let j = floor(y / resolution);
-      if (i >= 0 && i < cols && j >= 0 && j < rows) {
+  paper.strokeWeight(0.1);
+  let segments = marchingSquares(values, cols, rows, resolution, low);
+
+  for (let x = 0; x < w/u; x += hatchingDensity) {
+    for (let y = 0; y < h/u; y += hatchingDensity) {
+      let intersects = false;
+      for(let rr = 0; rr < hatchingMult; rr++){
+        let i = floor((x + rr * resolution) / resolution);
+        let j = floor((y + rr * resolution) / resolution);
+
+        if (i < 0 || i > cols|| j < 0 || j > rows) { continue }
+        
         let v = values[i][j];
-        if (v >= low && v < high) {
-          paper.line(x, y + hatchingDensity, x + hatchingDensity, y);
+        if (v < low || v > high) {
+          intersects = true;
+          break;
         }
+
+
+      }
+     
+
+      if (intersects) { continue; }
+      for(let segment of segments){
+        let x1 = segment[0].x;
+        let y1 = segment[0].y;
+        let x2 = segment[1].x;
+        let y2 = segment[1].y;
+        let x3 = x;
+        let y3 = y ;
+        let x4 = x + hatchingDensity;
+        let y4 = y + hatchingDensity;
+
+        let p1 = createVector(x1, y1);
+        let p2 = createVector(x2, y2);
+        let p3 = createVector(x3, y3);
+        let p4 = createVector(x4, y4);
+
+        if(!linesIntersect(p1, p2, p3, p4)){
+          paper.line(x, y , x + hatchingDensity, y + hatchingDensity);
+        } else {
+          let new_end = line_intersection(p1, p2, p3, p4);
+          // paper.line(x, y, new_end.x, new_end.y);
+        }
+
+
+        
       }
     }
   }
@@ -315,7 +374,7 @@ function below_water_level(position){
   let col = constrain(floor(position.x / (resolution * u)), 0 , cols - 1);
   let row = constrain(floor(position.y / (resolution * u)), 0 , rows - 1);
   let v = values[col][row];
-  return v > WATER_LEVEL
+  return v > WATER_LEVEL;
 }
 
 function above_water_level(position){

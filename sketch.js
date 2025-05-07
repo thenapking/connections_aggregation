@@ -7,7 +7,7 @@ let h = hi * DPI;
 let bw = bwi * DPI;
 
 
-let u = 0.42
+let u = 0.5 //0.42
 let t = 0;
 let interval = 20;
 
@@ -35,6 +35,7 @@ const OBSTACLE_SPACING = 5; // distance between hotspots and obstacles
 const HOTSPOT_MARGIN = 40 / u; // distance between border and hotspots
 const AGENT_MARGIN_FACTOR = 8;
 const AGENT_OBSTACLE_FACTOR = 1;
+const PARK_MARGIN = 100 / u;
 
 const SENSOR_ANGLE = Math.PI / 6;
 const TURN_ANGLE = 0.3;
@@ -86,21 +87,29 @@ let debug = false;
 
 let stroke_colour;
 let paper;
+let hatchBuffer;
 let seed;
 
 function setup() {
   seed = random(1000000);
+  // seed = 475648.5161106501
   // seed = 348097.90726263414
   // seed = 973226.451118719
   // seed = 393616.97942586313
   // seed = 84609.98579586975
+  // seed = 1599.153869747849
+  // seed = 61328.402068553056
+  seed = 148542.22929977023
   randomSeed(seed);
   noiseSeed(seed);
   console.log("Seed: " + seed);
 
   createCanvas(w + 2*bw, h + 2*bw);
   paper = createGraphics(w + 2*bw, h + 2*bw);
-
+  hatchBuffer = createGraphics(2*w + 2*bw, 2*h + 2*bw);
+  hatchBuffer.pixelDensity(1);
+  hatchBuffer.scale(u);
+  
   w = w / u
   h = h / u 
   bw = bw / u
@@ -134,6 +143,11 @@ function draw() {
   let update_fixtures = t % interval == 0;
  
   draw_groups(palette.depth[0], true);
+  draw_groups(palette.depth[1], true);
+  draw_groups(palette.depth[2], true);
+  draw_groups(palette.depth[3], true);
+  draw_groups(palette.depth[4], true);
+  draw_groups(palette.depth[5], true);
 
   if(update_fixtures){
     add_obstacles_to_grid();  
@@ -150,7 +164,7 @@ function draw() {
     // draw_journeys();
     // draw_chains();
     draw_chains(road_chains);
-    draw_chains(tube_chains);
+    // draw_chains(tube_chains);
     draw_hotspots();
 
     draw_slimeagents();
@@ -285,6 +299,14 @@ function draw_obstacles() {
   push()
   for (let obstacle of obstacles) {
     obstacle.draw();
+  }
+  pop()
+}
+
+function draw_parks() {
+  push()
+  for (let park of parks) {
+    park.draw();
   }
   pop()
 }

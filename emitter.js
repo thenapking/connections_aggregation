@@ -70,13 +70,22 @@ function create_hotspot_emitters(){
 }
 
 function create_emitters(width, height) {
-  while(emitters.length < NUM_EMITTERS){
-    let x = constrain(randomGaussian(width/2, width/5), EMITTER_MARGIN, width - EMITTER_MARGIN);
+  let MAX_ATTEMPTS = 1000;
+  let attempts = 0;
+  while(emitters.length < NUM_EMITTERS && attempts < MAX_ATTEMPTS){
+    let x = constrain(randomGaussian(width/2, width/5),   EMITTER_MARGIN, width - EMITTER_MARGIN);
     let y = constrain(randomGaussian(height/2, height/5), EMITTER_MARGIN, height - EMITTER_MARGIN);
     
     if(below_water_level(createVector(x,y))){ continue; }
 
     let intersecting = false;
+
+    for(let park of parks){
+      if(park.inside(createVector(x, y), 0, 10)){
+        intersecting = true;
+        break;
+      }
+    }
 
     for(let other of emitters){
       let d = p5.Vector.dist(createVector(x, y), other.position);
@@ -97,6 +106,7 @@ function create_emitters(width, height) {
     if(!intersecting){ 
       emitters.push(new Emitter(x, y));
     }
+    attempts++;
   }
 
 
@@ -117,7 +127,20 @@ function create_emitters_from_foodlayer(){
       let x = (i / 4) % foodLayer.width;
       let y = Math.floor((i / 4) / foodLayer.width);
       let new_position = createVector(x, y);
+
+      if(x < EMITTER_MARGIN || y < EMITTER_MARGIN){ continue; }
+      if(x > w - EMITTER_MARGIN || y > h - EMITTER_MARGIN){ continue; }
       if(below_water_level(new_position)){ continue; }
+
+      let intersecting = false;
+      for(let park of parks){
+        if(park.inside(createVector(x, y), 0, 0)){
+          intersecting = true;
+          break;
+        }
+      }
+
+      if(intersecting){ continue; }
 
       let nearest_distance = Infinity;
       if(x > w || y > h){ continue; }

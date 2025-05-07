@@ -36,12 +36,25 @@ class SlimeAgent {
     let col = constrain(floor(this.position.x / (resolution * u)), 0 , cols - 1);
     let row = constrain(floor(this.position.y / (resolution * u)), 0 , rows - 1);
     let v = values[col][row];
+
     if(v > WATER_LEVEL){
-      this.position.x = random(w);
-      this.position.y = random(h);
-      this.angle = random(TWO_PI);
+      this.reset_position();
     }
 
+    for(let park of parks){
+      if(park.inside(this.position, 0, 0)) {
+        this.reset_position();
+      };
+    }
+
+  }
+
+  reset_position(){
+    this.position.x = this.assignedEmitter.position.x + random(-10, 10);
+    this.position.y = this.assignedEmitter.position.y + random(-10, 10);
+    this.angle = random(TWO_PI);
+    this.path = [this.position.copy()];
+    this.length = 0;
   }
 
   set_angle(){

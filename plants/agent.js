@@ -79,6 +79,10 @@ class Agent {
     if(v > WATER_LEVEL){
       this.outside = true;
     }
+
+    for(let park of parks){
+      if(park.inside(this.position, 0, 0)) { this.outside = true };
+    }
   }
 
   resize() {
@@ -239,7 +243,8 @@ class Agent {
       strokeWeight(2);
       translate(this.position.x, this.position.y);
       rotate(this.direction);
-      ellipse(0, 0, this.radius, this.radius*1.25);
+      // ellipse(0, 0, this.radius, this.radius*1.25);
+      circle(0, 0, this.radius * 2);
       // rect(0, 0, this.radius, this.radius*1.5);
     pop();
   }
