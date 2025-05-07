@@ -76,9 +76,10 @@ const NUM_OBSTACLES = 4000;
 
 
 let show_major_routes = false;
-let show_slime = true
-let show_emitters = true;
+let show_slime = false
+let show_emitters = false;
 let show_obstacles = false;
+let show_hotspots = false;
 let enable_slimeagents = false
 
 let exporting = false;
@@ -242,6 +243,8 @@ function draw_journeys() {
 }
 
 function draw_hotspots() {
+  if(!show_hotspots) return;
+
   push()
   for (let hotspot of hotspots) {
     hotspot.draw();
@@ -270,15 +273,10 @@ function draw_connections(){
 function draw_chains(chains) {
   push()
   for (let chain of chains) {
-    let c = palette.black
+    let c = paper_palette.black
     let sw = 4
 
-    if(chain.line_id >= 0) {
-      let hue = map(chain.line_id, 0, MAX_LINE_ID, 0, 360);
-      sw = 20
-      c = color(hue, 100, 100)
-    }
-
+    
     chain.draw(c, sw);
   }
   pop()

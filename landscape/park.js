@@ -71,13 +71,20 @@ class Park {
     for (let i = 0; i < this.hatching.length; i += 2) {
       let x1 = this.hatching[i].x, y1 = this.hatching[i].y;
       let x2 = this.hatching[i+1].x, y2 = this.hatching[i+1].y;
-      if(below_water_level(createVector(x1, y1))){
-        paper.circle(x1, y1, 5);
-      }
-      if(below_water_level(createVector(x2, y2))){
-        paper.circle(x2, y2, 5);
-      }
+      
       paper.line(x1, y1, x2, y2);
+    }
+  }
+
+  draw_svg(){
+    noFill()
+    stroke(0)
+    strokeWeight(1)
+    for (let i = 0; i < this.hatching.length; i += 2) {
+      let x1 = this.hatching[i].x, y1 = this.hatching[i].y;
+      let x2 = this.hatching[i+1].x, y2 = this.hatching[i+1].y;
+      
+      line(x1, y1, x2, y2);
     }
   }
   

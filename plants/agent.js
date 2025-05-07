@@ -238,15 +238,15 @@ class Agent {
 
   draw_screen(){
     push();
-      fill(palette.colours[this.group.fillColorIndex]);
-      stroke(palette.colours[this.group.strokeColorIndex]);
+      fill(paper_palette.white);
+      stroke(paper_palette.white);
       strokeWeight(2);
       translate(this.position.x, this.position.y);
       rotate(this.direction);
-      // ellipse(0, 0, this.radius, this.radius*1.25);
-      circle(0, 0, this.radius * 2);
-      // rect(0, 0, this.radius, this.radius*1.5);
+      circle(0, 0, this.radius);
+      
     pop();
   }
+
 }
 

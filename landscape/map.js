@@ -64,6 +64,31 @@ function draw_grid(){
   paper.pop()
 }
 
+function draw_grid_svg(){
+  push()
+    noFill()
+    stroke(0)
+    for(let i = 0; i < wi + 1; i++){
+      let sw = i%2 == 0 ? 0.75 : 0.25;
+      strokeWeight(sw/u);
+      line(0, 0, 0, h);
+      translate(DPI/u, 0)
+    }
+  pop()
+
+  push()
+    noFill()
+    stroke(0)
+
+    for(let j = 0; j < hi + 1; j++){
+      let sw = j%2 == 0 ? 0.75 : 0.25;
+      strokeWeight(sw/u);
+      line(0, 0, w, 0);
+      translate(0, DPI/u)
+    }
+  pop()
+}
+
 
 function paper_texture() {
   // This function is based on the code from:
@@ -169,7 +194,7 @@ function fbm(x, y, octaves=5) {
 
 function draw_contours(){
   paper.strokeWeight(2/u)
-  let contour_colour = color(paper_palette.white);
+  let contour_colour = color(paper_palette.black);
   paper.strokeCap(SQUARE)
   paper.noFill();
   paper.scale(u) //why twice?
@@ -179,21 +204,26 @@ function draw_contours(){
     for(let segment of segments){
       if(t < WATER_LEVEL - isoStep){
         let alpha = paper_palette.strength * map(t, min_threshold, max_threshold, 10, 20);
-        contour_colour.setAlpha(alpha);
+        contour_colour.setAlpha(20);
         paper.stroke(contour_colour);
       } else {
-        paper.stroke(paper_palette.black);
+        paper.stroke(paper_palette.sea);
       }
-      paper.line(segment[0].x, segment[0].y, segment[1].x, segment[1].y);
+
+      if(exporting && t >= WATER_LEVEL - isoStep){
+        line(segment[0].x, segment[0].y, segment[1].x, segment[1].y);
+      } else {
+        paper.line(segment[0].x, segment[0].y, segment[1].x, segment[1].y);
+      }
     };
   }
 }
 
 function draw_hatching(low, high) {
-  paper.stroke(paper_palette.black);
-
+  paper.stroke(paper_palette.sea);
   const cellStep = hatchingDensity / resolution;
   // Diagonals defined by k = i - j
+  let line_count = 0;
   for (let k = -(rows - 1); k <= cols - 1; k++) {
     if ((k % cellStep) !== 0) continue;
 
@@ -217,15 +247,7 @@ function draw_hatching(low, high) {
         end = { x: x1, y: y1 };
       } else if (start) {
         // End the current run and draw
-        paper.fill(255,0,0)
-        paper.noStroke();
-        paper.circle(end.x, end.y, 20);
-
-        paper.stroke(paper_palette.black);
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-        const slope = dx !== 0 ? dy / dx : Infinity;
-        console.log(slope)
+        line_count++;
         paper.line(start.x, start.y, end.x, end.y);
         start = null;
         end = null;
@@ -233,28 +255,22 @@ function draw_hatching(low, high) {
     }
     // Draw any run that reaches the end
     if (start) {
-      const dx = end.x - start.x;
-      const dy = end.y - start.y;
-      const slope = dx !== 0 ? dy / dx : Infinity;
-      console.log(slope)
-
-      paper.fill(0, 255,0)
-      paper.noStroke();
-      paper.circle(end.x, end.y, 20);
-
+      line_count++;
       paper.stroke(paper_palette.black);
       paper.line(start.x, start.y, end.x, end.y);
     }
   }
+
+  console.log("Line count: " + line_count);
 }
 
 
 
 function draw_sea(low, high) {
-  paper.stroke(paper_palette.black);
-  paper.strokeWeight(0.1);
+  paper.stroke(paper_palette.sea);
+  paper.strokeWeight(0.025);
   let segments = marchingSquares(values, cols, rows, resolution, low);
-
+  
   for (let x = 0; x < w/u; x += hatchingDensity) {
     for (let y = 0; y < h/u; y += hatchingDensity) {
       let intersects = false;

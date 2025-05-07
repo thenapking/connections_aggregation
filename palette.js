@@ -128,4 +128,15 @@ let palette_name = "mindful97";
 let palette = palettes[palette_name];
 
 let paper_palette_name = "Military Grey";
-let paper_palette = paper_palettes[paper_palette_name];
+// let paper_palette = paper_palettes[paper_palette_name];
+
+
+let paper_palette = {
+  background: "#faf3e0",
+  white: "#ffffff",
+  black:  "#080917",
+  sea: "#52a2c5",
+  colours: ["#efd542", "#d2772c", "#2d773c", "#232c75", "#3e9ab7", "#ce1724"]
+}
+
+

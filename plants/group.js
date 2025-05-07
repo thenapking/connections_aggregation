@@ -230,26 +230,9 @@ class Group {
     this.branches.push(...childbranches);
   }
 
-  create_group(branch, position, idx) {
-    //TODO
-  }
 
   draw() {
     push();
-
-    if(this.show_branches){
-      for (let branch of this.branches) {
-        let start = branch.parent.position;
-        let end = branch.getEndPoint();
-        this.draw_branch(start, end);
-      }
-
-      for (let agent of this.agents) {
-        for (let child of agent.children) {
-          this.draw_branch(agent.position, child.position, agent.depth % 2);
-        }
-      }
-    }
 
     if(this.show_agents){
       for (let agent of this.agents) {
@@ -257,10 +240,6 @@ class Group {
       }
     }
 
-    if(this.enableSeparation){
-      fill(palette.black)
-      circle(this.position.x, this.position.y, 30);
-    }
     pop();
   }
 

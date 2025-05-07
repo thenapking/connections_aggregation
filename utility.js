@@ -1,8 +1,8 @@
 let gui;
 
 const groupSettings = {
-  fillColorIndex: 4,    // Dropdown: key from palette.colours
-  strokeColorIndex: 4,  // Dropdown: key from palette.colours
+  fillColorIndex: 0,    // Dropdown: key from palette.colours
+  strokeColorIndex: 0,  // Dropdown: key from palette.colours
   lineStyle: "straight",
 
   showAgents: true,
@@ -30,10 +30,10 @@ const groupSettings = {
   childTheta: Math.PI / 6,
   childRadius: 5,
 
-  enableSeparation: false,
-  enableResize: false,
-  enableAlignment: false,
-  enableObstacles: false
+  enableSeparation: true,
+  enableResize: true,
+  enableAlignment: true,
+  enableObstacles: true
 
 };
 
@@ -155,5 +155,78 @@ function setup_gui(){
 function updateGUIControllers() {
   gui.__controllers.forEach(controller => controller.updateDisplay());
 }
+
+function begin_shape(canvas){
+  if (canvas instanceof p5.Renderer) {
+    beginShape()
+  } else if (canvas instanceof p5.Graphics) {
+    canvas.beginShape()
+  }
+}
+
+function end_shape(canvas){
+  if (canvas instanceof p5.Renderer) {
+    endShape()
+  } else if (canvas instanceof p5.Graphics) {
+    canvas.endShape()
+  }
+}
+
+function curve_vertex(canvas, x, y){
+  if (canvas instanceof p5.Renderer) {
+    curveVertex(x, y)
+  } else if (canvas instanceof p5.Graphics) {
+    canvas.curveVertex(x, y)
+  }
+}
+
+function no_stroke(canvas){
+  if (canvas instanceof p5.Renderer) {
+    noStroke()
+  } else if (canvas instanceof p5.Graphics) {
+    canvas.noStroke()
+  }
+}
+
+function push_to(canvas){
+  if (canvas instanceof p5.Renderer) {
+    push()
+  } else if (canvas instanceof p5.Graphics) {
+    canvas.push()
+  }
+}
+
+function pop_from(canvas){
+  if (canvas instanceof p5.Renderer) {
+    pop()
+  } else if (canvas instanceof p5.Graphics) {
+    canvas.pop()
+  }
+}
+
+function no_fill(canvas){
+  if (canvas instanceof p5.Renderer) {
+    noFill()
+  } else if (canvas instanceof p5.Graphics) {
+    canvas.noFill()
+  }
+}
+
+function rectangle(canvas, x0, y0, x1, y1){
+  if (canvas instanceof p5.Renderer) {
+    rect(x0, y0, x1, y1)
+  } else if (canvas instanceof p5.Graphics) {
+    canvas.rect(x0, y0, x1, y1)
+  }
+}
+
+function oval(canvas, x, y, a, b){
+  if (canvas instanceof p5.Renderer) {
+    ellipse(x, y, a, b)
+  } else if (canvas instanceof p5.Graphics) {
+    canvas.ellipse(x, y, a, b)
+  }
+}
+
 
 
