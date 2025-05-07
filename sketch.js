@@ -92,6 +92,8 @@ function setup() {
   seed = random(1000000);
   // seed = 348097.90726263414
   // seed = 973226.451118719
+  // seed = 393616.97942586313
+  // seed = 84609.98579586975
   randomSeed(seed);
   noiseSeed(seed);
   console.log("Seed: " + seed);

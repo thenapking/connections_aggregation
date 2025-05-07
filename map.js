@@ -5,6 +5,8 @@ function create_map(){
     paper.scale(u);
     paper.translate(bw, bw);
     draw_contours();
+    draw_sea(WATER_LEVEL, max_threshold);
+    // draw_hatching(WATER_LEVEL, max_threshold);  
   paper.pop()
 
   paper.push()
@@ -89,17 +91,18 @@ function max_from_min(a,b){
   return Math.max(Math.min(a, b), 0);
 }
 
-
 const isoStep = 0.015;       // Contour step (0–1 scale)
 const noiseScale = 0.0005;    // Perlin noise scale (detail level)
-const resolution = 10;        // Grid cell size in pixels
+const resolution = 12;        // Grid cell size in pixels
 const simplifyTolerance = 0.1; // Tolerance for simplify-js (higher = smoother)
+const hatchingDensity = resolution * 4; // Density of hatching lines
 let cols, rows; // Number of columns and rows in the grid
 let values = []; // 2D array to hold noise values 
 let grouped_values = {}; // Object to hold grouped noise values
 let min_threshold = 1.0; // Minimum threshold for noise values
 let max_threshold = 0.0; // Maximum threshold for noise values
 let WATER_LEVEL;
+
 function create_noise_field(){
   cols = floor(w / (resolution * u)) + 1;
   rows = floor(h / (resolution * u)) + 1;
@@ -125,8 +128,10 @@ function create_noise_field(){
 
   let keys = Object.keys(grouped_values);
   keys = keys.map(str => parseFloat(str)).sort((a, b) => a - b);
-  WATER_LEVEL = keys[Math.floor(keys.length * 0.5)];
+  WATER_LEVEL = keys[Math.floor(keys.length * 0.5)] - isoStep
   console.log("Water level: " + WATER_LEVEL);
+  console.log("Min: " + min_threshold);
+  console.log("Max: " + max_threshold);
   create_flow_field();
 
 }
@@ -148,16 +153,98 @@ function draw_contours(){
   paper.noFill();
   paper.scale(u) //why twice?
 
-  for (let t = 0; t <= WATER_LEVEL; t += isoStep) {
+  for (let t = 0; t < WATER_LEVEL; t += isoStep) {
     let segments = marchingSquares(values, cols, rows, resolution, t);
     for(let segment of segments){
-      let alpha = paper_palette.strength * map(t, min_threshold, max_threshold, 10, 20);
-      contour_colour.setAlpha(alpha);
-      paper.stroke(contour_colour);
+      if(t < WATER_LEVEL - isoStep){
+        let alpha = paper_palette.strength * map(t, min_threshold, max_threshold, 10, 20);
+        contour_colour.setAlpha(alpha);
+        paper.stroke(contour_colour);
+      } else {
+        paper.stroke(paper_palette.black);
+      }
       paper.line(segment[0].x, segment[0].y, segment[1].x, segment[1].y);
     };
   }
 }
+
+function draw_hatching(low, high) {
+  paper.stroke(paper_palette.black);
+
+  const cellStep = hatchingDensity / resolution;
+  // Diagonals defined by k = i - j
+  for (let k = -(rows - 1); k <= cols - 1; k++) {
+    if ((k % cellStep) !== 0) continue;
+
+    let start = null;
+    let end = null;
+    // Traverse cells along this diagonal
+    for (let i = 0; i < cols; i++) {
+      let j = i - k;
+      let v = values[i][j];
+
+      if (v >= low && v < high) {
+        // Compute diagonal endpoints for this cell
+        let x0 = i * resolution;
+        let y0 = (j + 1) * resolution;
+        let x1 = (i + 1) * resolution;
+        let y1 = j * resolution;
+
+        if (!start) {
+          start = { x: x0, y: y0 };
+        }
+        end = { x: x1, y: y1 };
+      } else if (start) {
+        // End the current run and draw
+        paper.fill(255,0,0)
+        paper.noStroke();
+        paper.circle(end.x, end.y, 20);
+
+        paper.stroke(paper_palette.black);
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const slope = dx !== 0 ? dy / dx : Infinity;
+        console.log(slope)
+        paper.line(start.x, start.y, end.x, end.y);
+        start = null;
+        end = null;
+      }
+    }
+    // Draw any run that reaches the end
+    if (start) {
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const slope = dx !== 0 ? dy / dx : Infinity;
+      console.log(slope)
+
+      paper.fill(0, 255,0)
+      paper.noStroke();
+      paper.circle(end.x, end.y, 20);
+
+      paper.stroke(paper_palette.black);
+      paper.line(start.x, start.y, end.x, end.y);
+    }
+  }
+}
+
+
+
+function draw_sea(low, high) {
+  paper.stroke(paper_palette.black);
+  for (let x = 0; x < w/u - hatchingDensity; x += hatchingDensity) {
+    for (let y = 0; y < h/u - hatchingDensity; y += hatchingDensity) {
+      let i = floor(x / resolution);
+      let j = floor(y / resolution);
+      if (i >= 0 && i < cols && j >= 0 && j < rows) {
+        let v = values[i][j];
+        if (v >= low && v < high) {
+          paper.line(x, y + hatchingDensity, x + hatchingDensity, y);
+        }
+      }
+    }
+  }
+}
+
 
 
 function getIntersection(x1, y1, v1, x2, y2, v2, threshold) {
