@@ -19,7 +19,8 @@ let obstacles = [];
 let groups = [];
 let hotspots = [];
 let connections = [];
-let chains = [];  
+let road_chains = [];  
+let tube_chains = [];
 let obstacles_grid; 
 
 let filtered_journeys = [];
@@ -31,7 +32,7 @@ let foodLayer;
 const EMITTER_MARGIN = 30;
 const OBSTACLE_MARGIN = 20; // distance between obstacles
 const OBSTACLE_SPACING = 5; // distance between hotspots and obstacles
-const HOTSPOT_MARGIN = 20; // distance between border and hotspots
+const HOTSPOT_MARGIN = 40 / u; // distance between border and hotspots
 const AGENT_MARGIN_FACTOR = 8;
 const AGENT_OBSTACLE_FACTOR = 1;
 
@@ -73,7 +74,7 @@ const NUM_ATTRACTORS = 1500
 const NUM_OBSTACLES = 4000;
 
 
-
+let show_major_routes = false;
 let show_slime = true
 let show_emitters = true;
 let show_obstacles = false;
@@ -90,7 +91,7 @@ let seed;
 function setup() {
   seed = random(1000000);
   // seed = 348097.90726263414
-  seed = 973226.451118719
+  // seed = 973226.451118719
   randomSeed(seed);
   noiseSeed(seed);
   console.log("Seed: " + seed);
@@ -146,8 +147,8 @@ function draw() {
   push();
     // draw_journeys();
     // draw_chains();
-    draw_chains(chains, "#BBBBBB");
-    // draw_chains(major_chains, palette.black);
+    draw_chains(road_chains);
+    draw_chains(tube_chains);
     draw_hotspots();
 
     draw_slimeagents();
@@ -163,10 +164,13 @@ function draw() {
 
   if(update_fixtures && enable_slimeagents){
     create_hotspots();
-    build_tube_network();
     if(t % (interval * 4) == 0){
       remove_intersecting_agents();
       create_emitters_from_foodlayer()
+    }
+
+    if(t % (interval * 16) == 0){
+      build_tube_network();
     }
   }
 
@@ -251,12 +255,15 @@ function draw_chains(chains) {
   push()
   for (let chain of chains) {
     let c = palette.black
+    let sw = 4
+
     if(chain.line_id >= 0) {
       let hue = map(chain.line_id, 0, MAX_LINE_ID, 0, 360);
-
+      sw = 20
       c = color(hue, 100, 100)
     }
-    chain.draw(c);
+
+    chain.draw(c, sw);
   }
   pop()
 }
@@ -292,7 +299,7 @@ function delete_slimeagents(){
   connections = [];
   journeys = [];
   filtered_journeys = [];
-  chains = [];
+  road_chains = [];
   foodLayer.clear();
   foodLayer.background(0);
   enable_slimeagents  = false;

@@ -8,7 +8,7 @@ function intersects(a1, a2, b1, b2) {
 }
 
 const MAX_TURN = 3.141 / 6
-const MAX_LENGTH = 20;
+const MAX_LENGTH = 40;
 const K = 4;
 
 function create_group_hotspots(){
@@ -75,7 +75,9 @@ function create_clusters(polar_coordinates){
 let MAX_LINE_ID = 0;
 
 function build_tube_network(){
-  let current_line_id = 0;
+  let current_line_id = 1;
+  tube_chains = [];
+  MAX_LINE_ID = 1;
   for(let group of groups){
     let polar_coordinates = create_polar_coordinates(group);
     let clusters = create_clusters(polar_coordinates);
@@ -88,8 +90,9 @@ function build_tube_network(){
       cluster.sort((a, b) => a.r - b.r);
 
       let first = cluster[0];
+      let first_dist = p5.Vector.dist(group.position, first.position);
+      if (first_dist > MAX_LENGTH * 20) { continue; }
       let chain = new Chain([group.position.copy()], group.id, current_line_id);
-
       chain.add(first.position.copy());
 
       connections.push({ from: group, to: first, group_id: group.id });
@@ -98,17 +101,17 @@ function build_tube_network(){
       let previous_direction = prev.direction;
 
       let remaining_cluster = cluster.slice(1);
+      let invalid_connection_count = 0
 
       for(let next of remaining_cluster){
         let next_connection = new Connection(prev, next, [], 0, '', previous_direction)
 
         if(!next_connection.valid) {
-          console.log("Invalid connection: ", next_connection);
+          invalid_connection_count++;
           continue;
         }
 
         if (next_connection.dist <= MAX_LENGTH) {
-          
           chain.add(next.position.copy());
           connections.push(next_connection);
           prev = next; 
@@ -126,6 +129,7 @@ function build_tube_network(){
             let connection2 = new Connection(candidate, next, [], 0, '', connection1.direction)
             
             if (connection1.valid && connection2.valid) {
+              candidate.major = true;
               chain.add(candidate.position.copy());
               chain.add(next.position.copy());
               connections.push(connection1, connection2);
@@ -136,8 +140,8 @@ function build_tube_network(){
           }
         }
       };
-
-      chains.push(chain);
+      console.log("invalid connections: ", invalid_connection_count, polar_coordinates.length, cluster.length);
+      tube_chains.push(chain);
       current_line_id++;
     };
   };

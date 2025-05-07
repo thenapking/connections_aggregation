@@ -110,6 +110,9 @@ function setup_gui(){
     generateRoutes: function() {
       generateHotspotsAndFlow();
     },
+    showMajorRoutes: function() {
+      show_major_routes = !show_major_routes;
+    },
     showEmitters: function() {
       show_emitters = !show_emitters;
     },
@@ -139,6 +142,7 @@ function setup_gui(){
 
   gui.add(guiControls, "removeLastGroup").name("Remove Last Group");
   gui.add(guiControls, "generateRoutes").name("Generate Routes");
+  gui.add(guiControls, "showMajorRoutes").name("Show Major Routes");
   gui.add(guiControls, "showEmitters").name("Show Emitters");
   gui.add(guiControls, "pauseSlime").name("Pause Slime");
   gui.add(guiControls, "showSlime").name("Show Slime");

@@ -15,8 +15,8 @@ class Hotspot {
   }
 
   edges(){
-    if(this.position.x < HOTSPOT_MARGIN || this.position.x > width - HOTSPOT_MARGIN ||
-       this.position.y < HOTSPOT_MARGIN || this.position.y > height - HOTSPOT_MARGIN){
+    if(this.position.x < HOTSPOT_MARGIN/u || this.position.x > width/u - HOTSPOT_MARGIN/u ||
+       this.position.y < HOTSPOT_MARGIN/u || this.position.y > height/u - HOTSPOT_MARGIN/u ){
       this.outside = true;  
     }
   }
@@ -71,12 +71,12 @@ class Hotspot {
     if(this.flagged) { return }
     if(this.outside) { return }
 
-    if(this.centroid === undefined) { return }
     noStroke();
     fill(stroke_colour);
-    if(this.nearest_major_hotspot) { fill(255, 0, 0)}
-    let sz = this.nearest_major_hotspot ? CSW * 8 : CSW + 2
-    ellipse(this.centroid.x, this.centroid.y, sz);
+
+    if(this.major) { fill(255, 0, 0)}
+    let sz = this.major ? CSW * 8 : CSW * 2
+    ellipse(this.position.x, this.position.y, sz, sz);
   }
 }
 
@@ -158,15 +158,11 @@ function create_hotspots() {
     hotspot.major = true;
   }
 
-  for(let i = 0; i < major_hotspots.length; i++){
-    major_hotspots[i].id = i;
-  }
-
   for(let i = 0; i < minor_hotspots.length; i++){
-    minor_hotspots[i].id = i + major_hotspots.length;
+    minor_hotspots[i].id = i
   }
 
-  hotspots = major_hotspots.concat(minor_hotspots);
+  hotspots = minor_hotspots
 
   
   let trajectories = [];
@@ -185,8 +181,10 @@ function create_hotspots() {
   let hotspot_connections = create_hotspot_connections(connections, hotspots)
 
   attach_major_hotspots(160)
+  attach_emitters();
+  create_hotspot_emitters();
 
-  chains = create_chains(hotspot_connections, connections, hotspots);
+  road_chains = create_chains(hotspot_connections, connections, hotspots);
 
 }
 
@@ -196,11 +194,26 @@ function create_hotspots() {
   // connection_statistics();
 
 function attach_major_hotspots(max_dist) {
+  console.log("Attaching major hotspots:", major_hotspots.length);
+  let mh_count = 0;
+  let flagged_count = 0;
+  let outside_count = 0;
+  let not_junction_count = 0;
   for(let major_hotspot of major_hotspots) {
+    if(major_hotspot.outside) { 
+      outside_count++; 
+      console.log("Major hotspot outside:", major_hotspot.position);
+      continue; 
+    }
+    if(major_hotspot.flagged) { flagged_count++; continue; }
+
     let nearest = null;
     let nearest_dist = Infinity;
     for(let hotspot of hotspots) {
-      if(hotspot.count < 3) { continue; }
+      if(hotspot.count < 3) { not_junction_count++; continue; }
+      if(hotspot.flagged) { continue; }
+      if(hotspot.outside) { continue; }
+      if(hotspot.major) { continue; }
       let d = p5.Vector.dist(major_hotspot.centroid, hotspot.centroid);
       if (d < nearest_dist && d < max_dist) {
         nearest_dist = d;
@@ -209,10 +222,16 @@ function attach_major_hotspots(max_dist) {
     }
     if (nearest) {
       nearest.nearest_major_hotspot = major_hotspot;
+      nearest.major = true;
       major_hotspot.centroid = nearest.centroid.copy();
       major_hotspot.position = nearest.position.copy();
+      mh_count++;
     }
   }
+  console.log("Attached major hotspots:", mh_count);
+  console.log("Flagged hotspots:", flagged_count);
+  console.log("Outside hotspots:", outside_count);
+  console.log("Not junction hotspots:", not_junction_count);
 }
 
 

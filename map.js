@@ -131,7 +131,7 @@ function create_noise_field(){
 
 }
 
-function fbm(x, y, octaves=8) {
+function fbm(x, y, octaves=5) {
   let sum = 0, amp = 1, freq = 1
   for (let i = 0; i < octaves; i++) {
     sum   += amp * noise(x * freq, y * freq);

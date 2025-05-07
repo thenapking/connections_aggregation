@@ -14,8 +14,8 @@ class Chain {
     this.length++;
   }
 
-  draw(colour){
-    strokeWeight(4);
+  draw(colour, sw){
+    strokeWeight(sw);
     stroke(colour);
 
     noFill();

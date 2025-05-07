@@ -2,7 +2,9 @@ class Connection {
   constructor(from, to, geometry, count, key, previous_direction) {
     this.from = from;
     this.to = to;
-    this.squence_key = key;
+    this.from_id = from.id; 
+    this.to_id = to.id;
+    this.squence_key = key || '';
     this.count = count;
     this.journeys = 0;
     this.percentile = 0;
@@ -12,9 +14,13 @@ class Connection {
     this.direction = this.v.heading();
     this.previous_direction = previous_direction || this.direction;
     this.turn = abs(((this.direction - this.previous_direction + PI) % TWO_PI) - PI);
-    this.intersects_self = connections.some(e => intersects(e.from.position, e.to.position, from.position, to.position));
-    this.valid_direction = this.turn <= MAX_TURN;
-    this.valid = this.valid_direction && !this.intersects_self;
+    // this.intersects_self = connections.some(e => intersects(e.from.position, e.to.position, from.position, to.position));
+    
+    
+    this.valid_direction = previous_direction ? this.turn <= MAX_TURN : true;
+    this.valid = this.valid_direction //&& !this.intersects_self;
+    // if(this.intersects_self) { console.log("Intersects self ") }
+    if(!this.valid_direction) { console.log("Invalid direction") }
   }
 
   draw(){
