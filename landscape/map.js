@@ -5,11 +5,15 @@ function create_map(){
     paper.scale(u);
     paper.translate(bw, bw);
     draw_contours();
-    draw_sea(WATER_LEVEL, max_threshold);
+    // draw_sea(WATER_LEVEL, max_threshold);
     // draw_hatching(WATER_LEVEL, max_threshold);  
   paper.pop()
 
-  
+  paper.push()
+    paper.scale(u);
+    paper.translate(bw, bw);
+    draw_sea_again(WATER_LEVEL, max_threshold);
+  paper.pop()
   create_parks()
 
   paper.push()
@@ -201,6 +205,7 @@ function draw_contours(){
 
   for (let t = 0; t < WATER_LEVEL; t += isoStep) {
     let segments = marchingSquares(values, cols, rows, resolution, t);
+    beginShape();
     for(let segment of segments){
       if(t < WATER_LEVEL - isoStep){
         let alpha = paper_palette.strength * map(t, min_threshold, max_threshold, 10, 20);
@@ -210,11 +215,7 @@ function draw_contours(){
         paper.stroke(paper_palette.sea);
       }
 
-      if(exporting && t >= WATER_LEVEL - isoStep){
-        line(segment[0].x, segment[0].y, segment[1].x, segment[1].y);
-      } else {
-        paper.line(segment[0].x, segment[0].y, segment[1].x, segment[1].y);
-      }
+      paper.line(segment[0].x, segment[0].y, segment[1].x, segment[1].y);
     };
   }
 }
@@ -264,6 +265,68 @@ function draw_hatching(low, high) {
   console.log("Line count: " + line_count);
 }
 
+let sea_lines = []
+function draw_sea_again(){
+  let lines = [];
+  let current_line = {start: null, end: null};
+  let current_point;
+  let resolution = 4
+  let hatch_width = 10/u
+  let visited = [];
+  for(let x = 0; x < w; x+=resolution){
+    visited[x] = [];
+    for(let y = 0; y < h; y+=resolution){
+      visited[x][y] = false;
+    }
+  } 
+
+  for(let x = 0; x < w; x += hatch_width){
+    for(let y = 0; y < h; y += hatch_width){
+      if(visited[x][y]) { continue; }
+      current_point = createVector(x, y);
+      while(current_point.x < w && current_point.y < h){
+        
+        visited[current_point.x][current_point.y] = true;
+
+        if(!current_line.start && below_water_level(current_point)){
+          current_line.start = current_point;
+          if(debug) console.log("start: " + current_line.start);
+        }
+
+        next_point = createVector(current_point.x + resolution, current_point.y + resolution);
+
+
+        if(!current_line.start) { current_point = next_point; continue; } 
+
+        
+
+        if(below_water_level(next_point) && next_point.x < w && next_point.y < h){
+          if(debug) console.log("next: ", next_point);
+          current_line.end = next_point
+        } else {
+          if(debug) console.log("above water", current_line);
+          if(current_line.start && current_line.end){
+            let d = dist(current_line.start.x, current_line.start.y, current_line.end.x, current_line.end.y);
+            if(d > 5){
+              lines.push(current_line);
+            }
+            console.log("end: " + current_line.end);
+          }
+          current_line = {start: null, end: null};
+        }
+        current_point = next_point;
+        if(debug) console.log("current: ", current_line);
+      }
+    }
+  }
+
+  paper.stroke(paper_palette.sea);
+  paper.strokeWeight(2);
+  for(let line of lines){
+    paper.line(line.start.x, line.start.y, line.end.x, line.end.y);
+  }
+  sea_lines = lines;
+}
 
 
 function draw_sea(low, high) {

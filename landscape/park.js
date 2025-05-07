@@ -5,6 +5,7 @@ class Park {
     this.points = [];
     this.hatch_angle = radians(random([45, -45]));
     this.hatch_interval = 6;
+    this.hatch_resolution = 6;
     this.initialize();
     this.hatching = [];
   }
@@ -68,6 +69,8 @@ class Park {
     paper.noFill();
     paper.stroke(paper_palette.black);
     paper.strokeWeight(1);
+
+   
     for (let i = 0; i < this.hatching.length; i += 2) {
       let x1 = this.hatching[i].x, y1 = this.hatching[i].y;
       let x2 = this.hatching[i+1].x, y2 = this.hatching[i+1].y;
@@ -142,10 +145,10 @@ class Park {
           }
         } else {
           if (currR >= 128 && prevR < 128) {
-            hatching.push(createVector(x + 1, y));
+            hatching.push(createVector(x + this.hatch_resolution, y));
             bActive = true;
           } else if (currR < 128 && prevR >= 128 && bActive) {
-            hatching.push(createVector(x - 1, y));
+            hatching.push(createVector(x - this.hatch_resolution, y));
             bActive = false;
           }
         }

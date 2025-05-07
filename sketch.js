@@ -33,7 +33,7 @@ const EMITTER_MARGIN = 30;
 const OBSTACLE_MARGIN = 20; // distance between obstacles
 const OBSTACLE_SPACING = 5; // distance between hotspots and obstacles
 const HOTSPOT_MARGIN = 40 / u; // distance between border and hotspots
-const AGENT_MARGIN_FACTOR = 8;
+const AGENT_MARGIN_FACTOR = 1/2;
 const AGENT_OBSTACLE_FACTOR = 1;
 const PARK_MARGIN = 100 / u;
 
@@ -100,7 +100,8 @@ function setup() {
   // seed = 84609.98579586975
   // seed = 1599.153869747849
   // seed = 61328.402068553056
-  seed = 148542.22929977023
+  // seed = 148542.22929977023
+  seed = 631107.3191591513
   randomSeed(seed);
   noiseSeed(seed);
   console.log("Seed: " + seed);

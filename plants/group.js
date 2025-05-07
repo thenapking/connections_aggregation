@@ -457,7 +457,7 @@ function remove_intersecting_agents(){
         for(let other_agent of other.agents){
           if(agent === other_agent) { continue; }
           let dist = p5.Vector.dist(agent.position, other_agent.position);
-          if(dist < (agent.radius + other_agent.radius + 0.1)){
+          if(dist < (agent.radius/2 + other_agent.radius/2 + 0.1)){
             group.remove_agent(agent);
             break;
           }

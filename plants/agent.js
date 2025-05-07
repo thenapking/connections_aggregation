@@ -238,8 +238,8 @@ class Agent {
 
   draw_screen(){
     push();
-      fill(paper_palette.white);
-      stroke(paper_palette.white);
+      fill(paper_palette.black);
+      stroke(paper_palette.black);
       strokeWeight(2);
       translate(this.position.x, this.position.y);
       rotate(this.direction);
