@@ -41,8 +41,9 @@ function refineNetwork(connections, hotspots) {
         let edge1 = edges[i];
         let edge2 = edges[i + 1];
         let angle_diff = abs(edge1.ang - edge2.ang);
+        let A = PI/6
 
-        if(angle_diff < PI/4 || angle_diff > 3*PI/4) {
+        if(angle_diff < A || angle_diff > (PI - A)) {
           // Split edge
           let new_hotspot_position = edge1.connection.from.centroid.copy().add(p5.Vector.sub(edge1.connection.to.centroid, edge1.connection.from.centroid).mult(0.5));
           let new_hotspot = new Hotspot(new_hotspot_position);

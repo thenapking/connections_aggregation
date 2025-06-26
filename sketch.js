@@ -33,7 +33,7 @@ const EMITTER_MARGIN = 30;
 const OBSTACLE_MARGIN = 20; // distance between obstacles
 const OBSTACLE_SPACING = 5; // distance between hotspots and obstacles
 const HOTSPOT_MARGIN = 40 / u; // distance between border and hotspots
-const AGENT_MARGIN_FACTOR = 1/2;
+const AGENT_MARGIN_FACTOR = 16;
 const AGENT_OBSTACLE_FACTOR = 1;
 const PARK_MARGIN = 100 / u;
 
@@ -101,7 +101,8 @@ function setup() {
   // seed = 1599.153869747849
   // seed = 61328.402068553056
   // seed = 148542.22929977023
-  seed = 631107.3191591513
+  // seed = 631107.3191591513
+  seed = 943595.245785884
   randomSeed(seed);
   noiseSeed(seed);
   console.log("Seed: " + seed);
@@ -165,8 +166,8 @@ function draw() {
   push();
     // draw_journeys();
     // draw_chains();
-    draw_chains(road_chains);
-    // draw_chains(tube_chains);
+    draw_chains(road_chains, 4,  palette.black);
+    // draw_chains(tube_chains, 10, palette.colours[2]);
     draw_hotspots();
 
     draw_slimeagents();
@@ -271,13 +272,9 @@ function draw_connections(){
   pop()
 }
 
-function draw_chains(chains) {
+function draw_chains(chains, sw = 4, c = palette.black) {
   push()
   for (let chain of chains) {
-    let c = paper_palette.black
-    let sw = 4
-
-    
     chain.draw(c, sw);
   }
   pop()
@@ -386,6 +383,14 @@ function keyPressed() {
     console.log(paper_palette_name)
     create_map();
     redraw();
+  } else if (key == 'x') {
+    saveJSON(connections, 'connections.json');
+    saveJSON(emitters, 'emitters.json');
+    saveJSON(hotspots, 'hotspots.json');
+    saveJSON(journeys, 'journeys.json');
+    saveJSON(groups, 'groups.json');
+
+
   }
   
 }

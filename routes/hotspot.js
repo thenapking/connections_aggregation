@@ -6,7 +6,7 @@ class Hotspot {
     this.count = 0;
     this.position = this.centroid;
     this.major = false;
-    this.emitter = null;
+    // this.emitter = null;
     this.nearest_emitter_distance = Infinity;
     this.nearest_major_hotspot = null;
     this.flagged = false;
@@ -39,9 +39,21 @@ class Hotspot {
     this.edges();
   }
 
+  emitter(){
+    let this_emitter;
+    for(let emitter of emitters){
+      if(emitter.hotspot == this){
+        this_emitter = emitter;
+        break;
+      }
+    }
+    return this_emitter;
+  }
+
   create_emitter(){
-    if(this.count == 0 || this.emitter ) { return }
+    if(this.count == 0 ) { return }
     if(this.outside) { return }
+    if(this.emitter()) { return }
     if(below_water_level(this.position)) { return }
 
     let nearest_dist = Infinity;
@@ -62,9 +74,6 @@ class Hotspot {
     emitter.attractor = attractor;
 
     emitters.push(emitter);
-
-    this.emitter = emitter;
-
   }
 
   draw(){

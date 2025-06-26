@@ -23,7 +23,7 @@ class Emitter {
 
     if(nearest_dist > EMITTER_MARGIN){ return; }
 
-    nearest.emitter = this;
+    // nearest.emitter = this;
     this.hotspot = nearest;
     
     let moving_closer = false;
@@ -166,9 +166,10 @@ function create_emitters_from_foodlayer(){
 function remove_emitters(){
   for(let emitter of emitters){
     if(below_water_level(emitter.position)){
-      if(emitter.hotspot){
-        emitter.hotspot.emitter = null;
-      }
+      // if(emitter.hotspot){
+      //   emitter.hotspot.emitter = null;
+      // }
+      emitter.hotspot = null;
 
       let index = emitters.indexOf(emitter);
       if(index > -1) {

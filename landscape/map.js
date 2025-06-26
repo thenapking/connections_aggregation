@@ -456,6 +456,13 @@ function below_water_level(position){
   return v > WATER_LEVEL;
 }
 
+function near_the_water_front(position){
+  let col = constrain(floor(position.x / (resolution * u)), 0 , cols - 1);
+  let row = constrain(floor(position.y / (resolution * u)), 0 , rows - 1);
+  let v = values[col][row];
+  return v > WATER_LEVEL - 2 * isoStep && v < WATER_LEVEL;
+}
+
 function above_water_level(position){
   !below_water_level(position)
 }
