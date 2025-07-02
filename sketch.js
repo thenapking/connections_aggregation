@@ -1,7 +1,7 @@
 const DPI = 96
-let wi = 6;
-let hi = 8;
-let bwi = 1
+let wi = 9.5;
+let hi = 12.75;
+let bwi = 1;
 let w = wi * DPI;
 let h = hi * DPI;
 let bw = bwi * DPI;
@@ -48,7 +48,7 @@ const OBSTACLE_DESTRUCTION_DISTANCE = 30;
 // TO DO: both grids use the same cell size
 // But the hotspot grid needs to be much finer to get the effect
 // Should be proportional to the SENSOR DISTANCE and STEP SIZE
-const CELL_SIZE = 20;
+const CELL_SIZE = 10;
 
 const PATH_DETAIL = 80;
 const MIN_JOURNEYS_TO_DRAW = 10;
@@ -72,7 +72,7 @@ const CSW = 2;
 const NUM_SLIMEAGENTS = 30;
 const NUM_EMITTERS = 100;
 const NUM_ATTRACTORS = 1500
-const NUM_OBSTACLES = 4000;
+const NUM_OBSTACLES = 0;
 
 
 let show_major_routes = false;
@@ -102,7 +102,7 @@ function setup() {
   // seed = 61328.402068553056
   // seed = 148542.22929977023
   // seed = 631107.3191591513
-  seed = 943595.245785884
+  // seed = 943595.245785884
   randomSeed(seed);
   noiseSeed(seed);
   console.log("Seed: " + seed);

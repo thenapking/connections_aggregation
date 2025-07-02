@@ -14,7 +14,7 @@ function create_map(){
     paper.translate(bw, bw);
     draw_sea_again(WATER_LEVEL, max_threshold);
   paper.pop()
-  create_parks()
+  // create_parks()
 
   paper.push()
     paper.scale(u);
@@ -178,7 +178,7 @@ function create_noise_field(){
 
   let keys = Object.keys(grouped_values);
   keys = keys.map(str => parseFloat(str)).sort((a, b) => a - b);
-  WATER_LEVEL = keys[Math.floor(keys.length * 0.5)] - isoStep
+  WATER_LEVEL = 10 //keys[Math.floor(keys.length * 0.5)] - isoStep
   console.log("Water level: " + WATER_LEVEL);
   console.log("Min: " + min_threshold);
   console.log("Max: " + max_threshold);
