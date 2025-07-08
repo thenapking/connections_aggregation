@@ -70,17 +70,17 @@ const MAX_CHAIN_COUNT = 50;
 const CSW = 2;
 
 const NUM_SLIMEAGENTS = 30;
-const NUM_EMITTERS = 100;
+const NUM_EMITTERS = 50;
 const NUM_ATTRACTORS = 1500
 const NUM_OBSTACLES = 0;
 
 
 let show_major_routes = false;
-let show_slime = false
+let show_slime = true
 let show_emitters = false;
 let show_obstacles = false;
 let show_hotspots = false;
-let enable_slimeagents = false
+let enable_slimeagents = true
 
 let exporting = false;
 let running = true
@@ -129,6 +129,8 @@ function setup() {
 
   setup_gui();
 
+  create_slimeagents();
+
 }
 
 
@@ -166,7 +168,8 @@ function draw() {
   push();
     // draw_journeys();
     // draw_chains();
-    draw_chains(road_chains, 4,  palette.black);
+
+    draw_connections();
     // draw_chains(tube_chains, 10, palette.colours[2]);
     draw_hotspots();
 
@@ -182,20 +185,21 @@ function draw() {
   }
 
   if(update_fixtures && enable_slimeagents){
-    create_hotspots();
-    if(t % (interval * 4) == 0){
-      remove_intersecting_agents();
-      create_emitters_from_foodlayer()
-    }
+    hotspots = [];
+    connections = [];
+    create_hotspots(slimegroups[0]);
+    create_hotspots(slimegroups[1]);
 
-    if(t % (interval * 16) == 0){
-      build_tube_network();
+    if(t % (interval * 4) == 0){
+      create_emitters_from_foodlayer()
     }
   }
 
   t++;
+  noLoop;
 }
 
+let group_a, group_b, slimegroups = []
 function create_slimeagents(){
   remove_intersecting_agents();
   emitters = [];
@@ -203,9 +207,26 @@ function create_slimeagents(){
   create_emitters(w, h);
   add_obstacles_to_grid();
 
-  for (let emitter of emitters) {
-    for (let i = 0; i < NUM_SLIMEAGENTS; i++) {
-      slimeagents.push(new SlimeAgent(emitter.position.x, emitter.position.y, emitter));
+  // ID, stepSize, sensorAngle, sensorDistance, turnAngle, colour, hotspot proximity
+  // original 1.5, PI / 6. 10, 0.3
+  
+  group_a = new SlimeGroup(0, 3,  0.53, 25, 0.07, 'red', 40)
+  group_b = new SlimeGroup(1, 20, 1.06, 50, 0.07, 'blue', 100)
+
+  group_a.setAttraction(group_a.id,  1);
+  group_a.setAttraction(group_b.id, -1);
+
+  group_b.setAttraction(group_a.id, -1);
+  group_b.setAttraction(group_b.id,  1);
+
+  slimegroups.push(group_a);
+  slimegroups.push(group_b);
+
+  for(let group of slimegroups){
+    for (let emitter of emitters) {
+      for (let i = 0; i < NUM_SLIMEAGENTS; i++) {
+        slimeagents.push(new SlimeAgent(emitter.position.x, emitter.position.y, emitter, group));
+      }
     }
   }
 
@@ -307,9 +328,17 @@ function draw_parks() {
   pop()
 }
 
-function create_food(){
-  foodLayer = createGraphics(w + 2*bw, h + 2*bw);
-  foodLayer.background(0);
+function create_food(n_layers = 2){
+  foodLayer = []
+  for(let i = 0; i < w + 2*bw; i++){
+    foodLayer[i] = [];
+    for(let j = 0; j < h + 2*bw; j++){
+      foodLayer[i][j] = [];
+      for(let k = 0; k < n_layers; k++){
+        foodLayer[i][j][k] = 0;
+      }
+    }
+  }
 }
 
 function delete_slimeagents(){
@@ -320,36 +349,18 @@ function delete_slimeagents(){
   journeys = [];
   filtered_journeys = [];
   road_chains = [];
-  foodLayer.clear();
-  foodLayer.background(0);
+  create_food();
   enable_slimeagents  = false;
 
 }
 
 function add_food(){
-  foodLayer.fill(0, 20);
-  foodLayer.noStroke();
-  foodLayer.rect(0, 0, width, height);
-
   for (let attractor of attractors) {
     attractor.discharge();
   }
 }
 
-function mousePressed() {
-  let position = createVector(mouseX/u - bw, mouseY/u - bw)
-  console.log(groupSettings)
-  let group = new Group(position, 
-    groupSettings.fillColorIndex,
-    groupSettings.strokeColorIndex,
-    groupSettings
-  )
-  groups.push(group);
-  group.id = groups.length - 1;
-  console.log("group: ", group.id, "created at: ", position.x, position.y)
-  console.log(groupSettings)
 
-}
 
 
 function keyPressed() {

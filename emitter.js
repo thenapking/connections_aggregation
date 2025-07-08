@@ -1,9 +1,10 @@
 class Emitter {
-  constructor(x, y) {
+  constructor(x, y, group) {
     this.position = createVector(x, y);
     this.radius = 5
     this.attractor = null;
     this.hotspot = null;
+    this.group = group;
   }
 
   attach_hotspot() {
@@ -69,7 +70,7 @@ function create_hotspot_emitters(){
   }
 }
 
-function create_emitters(width, height) {
+function create_emitters(width, height, group) {
   let MAX_ATTEMPTS = 1000;
   let attempts = 0;
   while(emitters.length < NUM_EMITTERS && attempts < MAX_ATTEMPTS){
@@ -104,7 +105,7 @@ function create_emitters(width, height) {
     }
     
     if(!intersecting){ 
-      emitters.push(new Emitter(x, y));
+      emitters.push(new Emitter(x, y, group));
     }
     attempts++;
   }
@@ -119,45 +120,46 @@ function create_emitters(width, height) {
 }
 
 function create_emitters_from_foodlayer(){
-  foodLayer.loadPixels();
-  for (let i = 0; i < foodLayer.pixels.length; i+=4) {
-    let r = foodLayer.pixels[i];
-   
-    if(r == 200){
-      let x = (i / 4) % foodLayer.width;
-      let y = Math.floor((i / 4) / foodLayer.width);
-      let new_position = createVector(x, y);
+  for(let i = 0; i < w + 2*bw; i++){
+    for(let j = 0; j < h + 2*bw; j++){
+      for(let k = 0; k < slimegroups.length; k++){
+        let r = foodLayer[i][j][k];
+        if(r < 200){ continue; }
+        let x = i;
+        let y = j;
+        if(x < EMITTER_MARGIN || y < EMITTER_MARGIN){ continue; }
+        if(x > w - EMITTER_MARGIN || y > h - EMITTER_MARGIN){ continue; }
+        let new_position = createVector(x, y);
+        if(below_water_level(new_position)){ continue; }
 
-      if(x < EMITTER_MARGIN || y < EMITTER_MARGIN){ continue; }
-      if(x > w - EMITTER_MARGIN || y > h - EMITTER_MARGIN){ continue; }
-      if(below_water_level(new_position)){ continue; }
-
-      let intersecting = false;
-      for(let park of parks){
-        if(park.inside(createVector(x, y), 0, 0)){
-          intersecting = true;
-          break;
+        let intersecting = false;
+        for(let park of parks){
+          if(park.inside(createVector(x, y), 0, 0)){
+            intersecting = true;
+            break;
+          }
         }
-      }
 
-      if(intersecting){ continue; }
+        if(intersecting){ continue; }
 
-      let nearest_distance = Infinity;
-      if(x > w || y > h){ continue; }
+        let nearest_distance = Infinity;
+        if(x > w || y > h){ continue; }
 
-      for(let other of emitters){
-        let d = p5.Vector.dist(new_position, other.position);
-        if(d < nearest_distance){
-          nearest_distance = d;
+        for(let other of emitters){
+          let d = p5.Vector.dist(new_position, other.position);
+          if(d < nearest_distance){
+            nearest_distance = d;
+          }
         }
-      }
 
-      if(nearest_distance > EMITTER_MARGIN * 2){
-        let emitter = new Emitter(x, y)
-        let attractor = new Attractor(x, y, 2);
+        if(nearest_distance > EMITTER_MARGIN * 2){
+          let group = find_group(k);
+          let emitter = new Emitter(x, y, group)
+          let attractor = new Attractor(x, y, 2);
 
-        emitters.push(emitter);
-        emitter.attractor = attractor;
+          emitters.push(emitter);
+          emitter.attractor = attractor;
+        }
       }
     }
   }
@@ -166,9 +168,6 @@ function create_emitters_from_foodlayer(){
 function remove_emitters(){
   for(let emitter of emitters){
     if(below_water_level(emitter.position)){
-      // if(emitter.hotspot){
-      //   emitter.hotspot.emitter = null;
-      // }
       emitter.hotspot = null;
 
       let index = emitters.indexOf(emitter);

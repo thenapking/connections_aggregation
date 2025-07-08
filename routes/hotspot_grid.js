@@ -1,9 +1,10 @@
 class HotspotGrid {
-  constructor() {
+  constructor(group) {
     this.rows = Math.ceil(h / CELL_SIZE);
     this.cols = Math.ceil(w / CELL_SIZE);
     this.cells = [];
-    this.resulting_groups = [];
+    this.hotspot_groups = [];
+    this.group = group;
     this.initialize();
   }
 
@@ -33,14 +34,14 @@ class HotspotGrid {
       let c = this.closest_centroid(point, CELL_SIZE);
       
       if (!c) {
-        let g = new Hotspot(point);
+        let g = new Hotspot(point, this.group);
         let i = this.col(g.centroid);
         let j = this.row(g.centroid);
 
         if(i < 0 || j < 0 || i >= this.cols || j >= this.rows) {
           console.log("Error: centroid out of range?", i, j);
         } else {
-          this.resulting_groups.push(g);
+          this.hotspot_groups.push(g);
           this.cells[i][j] = g;
         }
       } else {
@@ -85,7 +86,7 @@ class HotspotGrid {
 
   // not used
   redistribute_points(points) {
-    for (let g of this.resulting_groups) {
+    for (let g of this.hotspot_groups) {
       g.delete_points();
     }
     for (let point of points) {

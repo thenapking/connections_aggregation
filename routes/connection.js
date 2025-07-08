@@ -1,5 +1,5 @@
 class Connection {
-  constructor(from, to, geometry, count, key, previous_direction) {
+  constructor(group, from, to, geometry, count, key, previous_direction) {
     this.from = from;
     this.to = to;
     this.from_id = from.id; 
@@ -21,10 +21,12 @@ class Connection {
     this.valid = this.valid_direction //&& !this.intersects_self;
     // if(this.intersects_self) { console.log("Intersects self ") }
     if(!this.valid_direction) { console.log("Invalid direction") }
+    this.group = group;
   }
 
   draw(){
-    stroke(stroke_colour);
+    let c = this.group.colour || 'orange';
+    stroke(c);
     strokeWeight(CSW);
 
     line(this.from.centroid.x, this.from.centroid.y, 

@@ -1,8 +1,9 @@
 class SequenceGenerator {
-  constructor(hotspots, trajectories) {
+  constructor(hotspots, trajectories, group) {
     this.hotspots = hotspots;
     this.trajectories = trajectories;
     this.sequences = {};
+    this.group = group;
     this.initialize();
   }
 
@@ -40,6 +41,7 @@ class SequenceGenerator {
     let nearest = null;
     let nearest_dist = Infinity;
     for (let hotspot of this.hotspots) {
+      if(hotspot.group.id != this.group.id) { continue; }
       let d = p5.Vector.dist(p, hotspot.centroid);
       if (d < nearest_dist) {
         nearest_dist = d;
@@ -49,7 +51,7 @@ class SequenceGenerator {
     return nearest;
   }
 
-  create_connections(check_obstacles = true) {
+  create_connections(check_obstacles = false) {
     let connections = [];
     for (let key in this.sequences) {
       if (this.sequences.hasOwnProperty(key)) {
@@ -61,11 +63,11 @@ class SequenceGenerator {
 
         let from_hotspot = find_hotspot(from_id);
         let to_hotspot = find_hotspot(to_id);
-
+        //TODO: Check if from_hotspot and to_hotspot are valid
         if (check_obstacles && this.intersectsObstacle(from_hotspot, to_hotspot)) { continue }
 
         let geometry = [from_hotspot.centroid.copy(), to_hotspot.centroid.copy()];
-        let connection = new Connection(from_hotspot, to_hotspot, geometry, 0, this.sequences[key]);
+        let connection = new Connection(from_hotspot.group, from_hotspot, to_hotspot, geometry, 0, this.sequences[key]);
         connections.push(connection);
       }
     }

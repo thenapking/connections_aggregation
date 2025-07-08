@@ -19,10 +19,10 @@ function connection_map(connections) {
   return connection_map;
 }
 
-function refineNetwork(connections, hotspots) {
+function refineNetwork(connections) {
   let new_connections    = connections.slice();
   const maxIter   = 3;
-  console.log("Refining network with", new_connections.length, "connections and", hotspots.length, "hotspots");
+  // console.log("Refining network with", new_connections.length, "connections and", hotspots.length, "hotspots");
 
   for (let iter = 0; iter < maxIter; iter++) {
     const mapped_connections = connection_map(new_connections);
@@ -45,10 +45,12 @@ function refineNetwork(connections, hotspots) {
 
         if(angle_diff < A || angle_diff > (PI - A)) {
           // Split edge
+          let group = edge1.connection.from.group;
           let new_hotspot_position = edge1.connection.from.centroid.copy().add(p5.Vector.sub(edge1.connection.to.centroid, edge1.connection.from.centroid).mult(0.5));
-          let new_hotspot = new Hotspot(new_hotspot_position);
+          let new_hotspot = new Hotspot(new_hotspot_position, group);
+          new_hotspot.id = hotspots.length;
           hotspots.push(new_hotspot);
-          new_hotspot.id = hotspots.length - 1;
+
           new_connections = split_edge(new_connections, edge1, new_hotspot);
         }
       }
@@ -62,7 +64,7 @@ function refineNetwork(connections, hotspots) {
     if (!didSplit) break;
   }
 
-  console.log("Refined network with", new_connections.length, "connections and", hotspots.length, "hotspots");
+  // console.log("Refined network with", new_connections.length, "connections and", hotspots.length, "hotspots");
   return new_connections;
 }
 
@@ -72,8 +74,9 @@ function split_edge(connections, edge, hotspot) {
   // console.log("Splitting edge: ", hotspot, edge);
   for (let connection of connections) {
     if (connection === edge.connection) {
-      let connection_a = new Connection(edge.connection.from, hotspot, [edge.from.position.copy(), hotspot.centroid.copy()], connection.sequence_key, edge.connection.count);
-      let connection_b = new Connection(hotspot, edge.connection.to, [hotspot.centroid.copy(), edge.to.position.copy()], connection.sequence_key, edge.connection.count);
+      let group = edge.connection.from.group;
+      let connection_a = new Connection(group, edge.connection.from, hotspot, [edge.from.position.copy(), hotspot.centroid.copy()], connection.sequence_key, edge.connection.count);
+      let connection_b = new Connection(group, hotspot, edge.connection.to, [hotspot.centroid.copy(), edge.to.position.copy()], connection.sequence_key, edge.connection.count);
 
       new_connections.push(connection_a);
       new_connections.push(connection_b);

@@ -1,5 +1,5 @@
 class Journey {
-  constructor(emitterA, emitterB, path, length) {
+  constructor(emitterA, emitterB, path, length, group) {
     this.emitterA = emitterA;
     this.emitterB = emitterB;
     this.length = length;
@@ -7,6 +7,7 @@ class Journey {
 
     this.path = this.resample(path)
     this.count = 1;
+    this.group = group;
   }
 
   calculate_distances(path){
@@ -72,8 +73,8 @@ class Journey {
   }
 }
 
-function filter_journeys(){
-  filtered_journeys = journeys.filter(conn => conn.count >= MIN_JOURNEYS_TO_DRAW);
+function filter_journeys(group){
+  filtered_journeys = journeys.filter(j => (j.count >= MIN_JOURNEYS_TO_DRAW) && (j.group.id === group.id));
 }
 
 function extract_journey_points(){

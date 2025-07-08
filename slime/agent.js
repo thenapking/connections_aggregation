@@ -1,10 +1,11 @@
 class SlimeAgent {
-  constructor(x, y, emitter) {
+  constructor(x, y, emitter, group) {
     this.position = createVector(x, y);
     this.angle = random(TWO_PI);
     this.assignedEmitter = emitter;
     this.path = [this.position.copy()];
     this.length = 0;
+    this.group = group;
   }
 
   update() {
@@ -12,20 +13,24 @@ class SlimeAgent {
 
     let previous = this.position.copy();
     
-    let velocity = p5.Vector.fromAngle(this.angle).mult(STEP_SIZE);
-    this.position = p5.Vector.add(this.position, velocity);;
+    let velocity = p5.Vector.fromAngle(this.angle).mult(this.group.stepSize);
+    this.position = p5.Vector.add(this.position, velocity);
+  
+
     this.edges();
 
     this.path.push(this.position.copy());
 
     this.length += p5.Vector.dist(previous, this.position);
 
-    deposit_food(this.position, 2/u);
+    deposit_food(this.group.id, this.position, 2/u);
   }
 
   sense(pos) {
-    let c = foodLayer.get(floor(pos.x), floor(pos.y));
-    return c[0];
+    if(pos.x < 0 || pos.x >= w + 2*bw || pos.y < 0 || pos.y >= h + 2*bw) { return 0 }
+
+    let c = foodLayer[floor(pos.x)][floor(pos.y)][this.group.id];
+    return c || 0;
   }
 
   edges(){
@@ -58,20 +63,20 @@ class SlimeAgent {
   }
 
   set_angle(){
-    let sensorLeft = p5.Vector.fromAngle(this.angle - SENSOR_ANGLE).setMag(SENSOR_DISTANCE).add(this.position);
-    let sensorCenter = p5.Vector.fromAngle(this.angle).setMag(SENSOR_DISTANCE).add(this.position);
-    let sensorRight = p5.Vector.fromAngle(this.angle + SENSOR_ANGLE).setMag(SENSOR_DISTANCE).add(this.position);
+    let sensorLeft = p5.Vector.fromAngle(this.angle - this.group.sensorAngle).setMag(this.group.sensorDistance).add(this.position);
+    let sensorCenter = p5.Vector.fromAngle(this.angle).setMag(this.group.sensorDistance).add(this.position);
+    let sensorRight = p5.Vector.fromAngle(this.angle + this.group.sensorAngle).setMag(this.group.sensorDistance).add(this.position);
     let leftVal = this.sense(sensorLeft);
     let centerVal = this.sense(sensorCenter);
     let rightVal = this.sense(sensorRight);
 
     if (centerVal > leftVal && centerVal > rightVal) {
     } else if (leftVal > rightVal) {
-      this.angle -= TURN_ANGLE;
+      this.angle -= this.group.turnAngle;
     } else if (rightVal > leftVal) {
-      this.angle += TURN_ANGLE;
+      this.angle += this.group.turnAngle;
     } else {
-      this.angle += random(-TURN_ANGLE, TURN_ANGLE);
+      this.angle += random(-this.group.turnAngle, this.group.turnAngle);
     }
 
     this.angle += this.avoid();
@@ -119,6 +124,7 @@ class SlimeAgent {
     return 0;
   }
 
+
   updateJourney(newEmitter) {
     let existing = null;
     for (let conn of journeys) {
@@ -129,7 +135,7 @@ class SlimeAgent {
       }
     }
     if (existing == null) {
-      let newConn = new Journey(this.assignedEmitter, newEmitter, this.path.slice(), this.length);
+      let newConn = new Journey(this.assignedEmitter, newEmitter, this.path.slice(), this.length, this.group);
       newConn.count = 1;
       journeys.push(newConn);
     } else {
@@ -142,15 +148,23 @@ class SlimeAgent {
   }
 
   draw() {
-    fill(255);
+    let c = this.group.colour || 'black'
+    fill(c);
     noStroke();
     ellipse(this.position.x, this.position.y, 4, 4);
   }
 }
 
-function deposit_food(position, radius) {
-  foodLayer.noStroke();
-  foodLayer.fill(255, 50);
-  foodLayer.ellipse(position.x, position.y, radius);
+function deposit_food(layer_id, position, radius) {
+  let x0 = floor(position.x)
+  let y0 = floor(position.y);
+  let r =   floor(radius);
+  for(let i = -r; i <= r; i++) {
+    let x = x0 + i;
+    for(let j = -r; j <= r; j++) {
+      let y = y0 + j;
+      foodLayer[x][y][layer_id]++;
+    }
+  }
 }
 
