@@ -50,9 +50,7 @@ class Emitter {
   }
 
   draw() {
-    let palette_idx = palette.groups[2][1];
-    let c = palette.colours[palette_idx];
-    fill(c);
+    fill('black');
     noStroke();
     ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2);
   }
@@ -124,7 +122,9 @@ function create_emitters_from_foodlayer(){
     for(let j = 0; j < h + 2*bw; j++){
       for(let k = 0; k < slimegroups.length; k++){
         let r = foodLayer[i][j][k];
-        if(r < 200){ continue; }
+        if(r === undefined){ continue; }
+        if(r <= 0){ continue; }
+        if(r < 400) { continue; } // Only create emitters for significant food amounts
         let x = i;
         let y = j;
         if(x < EMITTER_MARGIN || y < EMITTER_MARGIN){ continue; }
@@ -132,15 +132,7 @@ function create_emitters_from_foodlayer(){
         let new_position = createVector(x, y);
         if(below_water_level(new_position)){ continue; }
 
-        let intersecting = false;
-        for(let park of parks){
-          if(park.inside(createVector(x, y), 0, 0)){
-            intersecting = true;
-            break;
-          }
-        }
-
-        if(intersecting){ continue; }
+        
 
         let nearest_distance = Infinity;
         if(x > w || y > h){ continue; }
@@ -154,6 +146,7 @@ function create_emitters_from_foodlayer(){
 
         if(nearest_distance > EMITTER_MARGIN * 2){
           let group = find_group(k);
+          // console.log(`Creating emitter for food ${r} at (${x}, ${y})`);
           let emitter = new Emitter(x, y, group)
           let attractor = new Attractor(x, y, 2);
 

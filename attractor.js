@@ -5,7 +5,9 @@ class Attractor {
   }
 
   discharge() {
-    deposit_food(this.position, this.radius);
+    for(let group of slimegroups){
+      // deposit_food(group.id, this.position, this.radius);
+    }
   }
 
   draw() {

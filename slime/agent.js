@@ -23,21 +23,39 @@ class SlimeAgent {
 
     this.length += p5.Vector.dist(previous, this.position);
 
-    deposit_food(this.group.id, this.position, 2/u);
+    deposit_food(this.group.id, this.position, 2);
   }
 
   sense(pos) {
     if(pos.x < 0 || pos.x >= w + 2*bw || pos.y < 0 || pos.y >= h + 2*bw) { return 0 }
-
-    let c = foodLayer[floor(pos.x)][floor(pos.y)][this.group.id];
-    return c || 0;
+    let c =  foodLayer[floor(pos.x)][floor(pos.y)]
+    let total = 0;
+    for(let group of slimegroups){
+      total += c[group.id] * this.group.attraction[group.id];
+    }
+    return total || 0;
   }
 
   edges(){
-    if (this.position.x <     HOTSPOT_MARGIN) { this.position.x =     HOTSPOT_MARGIN; this.angle = PI - this.angle; }
-    if (this.position.x > w - HOTSPOT_MARGIN) { this.position.x = w - HOTSPOT_MARGIN; this.angle = PI - this.angle; }
-    if (this.position.y <     HOTSPOT_MARGIN) { this.position.y =     HOTSPOT_MARGIN; this.angle = -this.angle; }
-    if (this.position.y > h - HOTSPOT_MARGIN) { this.position.y = h - HOTSPOT_MARGIN; this.angle = -this.angle; }
+    let previous_position = this.position.copy(); 
+
+    if (this.position.x < HOTSPOT_MARGIN) {
+      this.position.x = w - HOTSPOT_MARGIN; // Wrap to the right
+    }
+    if (this.position.x > w - HOTSPOT_MARGIN) {
+      this.position.x = HOTSPOT_MARGIN; // Wrap to the left
+    }
+    if (this.position.y < HOTSPOT_MARGIN) {
+      this.position.y = h - HOTSPOT_MARGIN; // Wrap to the bottom
+    }
+    if (this.position.y > h - HOTSPOT_MARGIN) {
+      this.position.y = HOTSPOT_MARGIN; // Wrap to the top
+    }
+
+    if(previous_position.x !== this.position.x || previous_position.y !== this.position.y) {
+      this.splitJourney(previous_position);
+    }
+
     let col = constrain(floor(this.position.x / (resolution * u)), 0 , cols - 1);
     let row = constrain(floor(this.position.y / (resolution * u)), 0 , rows - 1);
     let v = values[col][row];
@@ -127,13 +145,14 @@ class SlimeAgent {
 
   updateJourney(newEmitter) {
     let existing = null;
-    for (let conn of journeys) {
-      if ((conn.emitterA === this.assignedEmitter && conn.emitterB === newEmitter) ||
-          (conn.emitterA === newEmitter && conn.emitterB === this.assignedEmitter)) {
-        existing = conn;
+    for (let journey of journeys) {
+      if ((journey.emitterA === this.assignedEmitter && journey.emitterB === newEmitter) ||
+          (journey.emitterA === newEmitter && journey.emitterB === this.assignedEmitter)) {
+        existing = journey;
         break;
       }
     }
+
     if (existing == null) {
       let newConn = new Journey(this.assignedEmitter, newEmitter, this.path.slice(), this.length, this.group);
       newConn.count = 1;
@@ -146,6 +165,47 @@ class SlimeAgent {
       }
     }
   }
+
+  splitJourney(previous_position) {
+    let previous_emitter;
+    let new_emitter;
+
+    for(let other of emitters){
+      let dist = p5.Vector.dist(this.position, other.position);
+      if (dist < other.radius + EMITTER_ASSIGN_DISTANCE) {
+        new_emitter = other;
+        break;
+      }
+    }
+
+    if (!new_emitter) {
+      new_emitter = new Emitter(this.position.x, this.position.y, this.group);
+      let attractor = new Attractor(this.position.x, this.position.y, 2);
+      emitters.push(new_emitter);
+      new_emitter.attractor = attractor;
+    }
+
+    for(let other of emitters){
+      let dist = p5.Vector.dist(previous_position, other.position);
+      if (dist < other.radius + EMITTER_ASSIGN_DISTANCE) {
+        previous_emitter = other;
+        break;
+      }
+    }
+
+    if (!previous_emitter) {
+      previous_emitter = new Emitter(previous_position.x, previous_position.y, this.group);
+      let attractor = new Attractor(previous_position.x, previous_position.y, 2);
+      emitters.push(previous_emitter);
+      previous_emitter.attractor = attractor;
+    }
+
+    this.updateJourney(previous_emitter);
+    this.assignedEmitter = new_emitter;
+    this.path = [this.position.copy()];
+    this.length = 0;
+  }
+
 
   draw() {
     let c = this.group.colour || 'black'

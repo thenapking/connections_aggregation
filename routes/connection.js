@@ -27,7 +27,7 @@ class Connection {
   draw(){
     let c = this.group.colour || 'orange';
     stroke(c);
-    strokeWeight(CSW);
+    strokeWeight(6);
 
     line(this.from.centroid.x, this.from.centroid.y, 
          this.to.centroid.x, this.to.centroid.y);

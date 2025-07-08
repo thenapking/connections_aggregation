@@ -1,4 +1,4 @@
-const DPI = 96
+const DPI = 48 //96
 let wi = 9.5;
 let hi = 12.75;
 let bwi = 1;
@@ -9,7 +9,7 @@ let bw = bwi * DPI;
 
 let u = 0.5 //0.42
 let t = 0;
-let interval = 20;
+let interval = 50;
 
 let slimeagents = [];
 let emitters = [];
@@ -69,8 +69,8 @@ const MAX_CHAIN_COUNT = 50;
 
 const CSW = 2;
 
-const NUM_SLIMEAGENTS = 30;
-const NUM_EMITTERS = 50;
+const NUM_SLIMEAGENTS = 500;
+const NUM_EMITTERS = 12;
 const NUM_ATTRACTORS = 1500
 const NUM_OBSTACLES = 0;
 
@@ -124,12 +124,13 @@ function setup() {
   stroke_colour = palette.black
 
   create_noise_field()
-  create_food();
   create_map();
 
   setup_gui();
 
   create_slimeagents();
+  create_food();
+
 
 }
 
@@ -147,13 +148,6 @@ function draw() {
 
   let update_fixtures = t % interval == 0;
  
-  draw_groups(palette.depth[0], true);
-  draw_groups(palette.depth[1], true);
-  draw_groups(palette.depth[2], true);
-  draw_groups(palette.depth[3], true);
-  draw_groups(palette.depth[4], true);
-  draw_groups(palette.depth[5], true);
-
   if(update_fixtures){
     add_obstacles_to_grid();  
   }
@@ -161,19 +155,15 @@ function draw() {
   push();
     draw_obstacles();
     draw_attractors();
-    draw_emitters();
 
   pop();
   
   push();
-    // draw_journeys();
-    // draw_chains();
-
     draw_connections();
-    // draw_chains(tube_chains, 10, palette.colours[2]);
     draw_hotspots();
-
     draw_slimeagents();
+    draw_emitters();
+
   pop();
 
   
@@ -188,9 +178,10 @@ function draw() {
     hotspots = [];
     connections = [];
     create_hotspots(slimegroups[0]);
-    create_hotspots(slimegroups[1]);
+    // create_hotspots(slimegroups[1]);
+    create_hotspots(slimegroups[2]);
 
-    if(t % (interval * 4) == 0){
+    if(t>0 && t % (interval * 4) == 0){
       create_emitters_from_foodlayer()
     }
   }
@@ -207,24 +198,32 @@ function create_slimeagents(){
   create_emitters(w, h);
   add_obstacles_to_grid();
 
-  // ID, stepSize, sensorAngle, sensorDistance, turnAngle, colour, hotspot proximity
+  // ID, stepSize, sensorAngle, sensorDistance, turnAngle, colour, hotspot proximity, agents per emitter
   // original 1.5, PI / 6. 10, 0.3
   
-  group_a = new SlimeGroup(0, 3,  0.53, 25, 0.07, 'red', 40)
-  group_b = new SlimeGroup(1, 20, 1.06, 50, 0.07, 'blue', 100)
+  group_a = new SlimeGroup(0, 5,    0.20, 25, 0.08, 'blue', 80, 100)
+  group_b = new SlimeGroup(1, 0.25, 0.60, 18, 1.25, 'red', 20, 400)
+  group_c = new SlimeGroup(1, 3,    0.50, 18, 1.25, 'green', 10, 600)
 
-  group_a.setAttraction(group_a.id,  1);
+  group_a.setAttraction(group_a.id,  0.02);
   group_a.setAttraction(group_b.id, -1);
+  group_a.setAttraction(group_c.id, -1);
 
-  group_b.setAttraction(group_a.id, -1);
-  group_b.setAttraction(group_b.id,  1);
+  group_b.setAttraction(group_a.id, -2);
+  group_b.setAttraction(group_b.id,  2);
+  group_b.setAttraction(group_c.id, -2);
+
+  group_c.setAttraction(group_a.id, -2);
+  group_c.setAttraction(group_b.id, -2);
+  group_c.setAttraction(group_c.id,  2);
 
   slimegroups.push(group_a);
   slimegroups.push(group_b);
+  slimegroups.push(group_c);
 
   for(let group of slimegroups){
     for (let emitter of emitters) {
-      for (let i = 0; i < NUM_SLIMEAGENTS; i++) {
+      for (let i = 0; i < group.agents_per_emitter; i++) {
         slimeagents.push(new SlimeAgent(emitter.position.x, emitter.position.y, emitter, group));
       }
     }
@@ -328,13 +327,13 @@ function draw_parks() {
   pop()
 }
 
-function create_food(n_layers = 2){
+function create_food(){
   foodLayer = []
   for(let i = 0; i < w + 2*bw; i++){
     foodLayer[i] = [];
     for(let j = 0; j < h + 2*bw; j++){
       foodLayer[i][j] = [];
-      for(let k = 0; k < n_layers; k++){
+      for(let k = 0; k < slimegroups.length; k++){
         foodLayer[i][j][k] = 0;
       }
     }

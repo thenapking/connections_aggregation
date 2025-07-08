@@ -150,6 +150,8 @@ function setup_gui(){
   gui.add(guiControls, "addSlime").name("Add Slime");
   gui.add(guiControls, "pause").name("Pause");
   gui.add(guiControls, "debug").name("Debug");
+
+  gui.close();
 }
 
 function updateGUIControllers() {
