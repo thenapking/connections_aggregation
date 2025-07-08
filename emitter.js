@@ -1,10 +1,11 @@
 class Emitter {
-  constructor(x, y, group) {
+  constructor(x, y, group, principal = true) {
     this.position = createVector(x, y);
     this.radius = 5
     this.attractor = null;
     this.hotspot = null;
     this.group = group;
+    this.principal = principal;
   }
 
   attach_hotspot() {
@@ -147,7 +148,7 @@ function create_emitters_from_foodlayer(){
         if(nearest_distance > EMITTER_MARGIN * 2){
           let group = find_group(k);
           // console.log(`Creating emitter for food ${r} at (${x}, ${y})`);
-          let emitter = new Emitter(x, y, group)
+          let emitter = new Emitter(x, y, group, false)
           let attractor = new Attractor(x, y, 2);
 
           emitters.push(emitter);

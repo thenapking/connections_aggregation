@@ -9,7 +9,7 @@ let bw = bwi * DPI;
 
 let u = 0.5 //0.42
 let t = 0;
-let interval = 50;
+let interval = 20;
 
 let slimeagents = [];
 let emitters = [];
@@ -51,7 +51,7 @@ const OBSTACLE_DESTRUCTION_DISTANCE = 30;
 const CELL_SIZE = 10;
 
 const PATH_DETAIL = 80;
-const MIN_JOURNEYS_TO_DRAW = 10;
+const MIN_JOURNEYS_TO_DRAW = 20;
 
 // higher values give a more abstract network
 // perhaps we can combine high values for a large network, but with more detail in the paths?
@@ -198,12 +198,12 @@ function create_slimeagents(){
   create_emitters(w, h);
   add_obstacles_to_grid();
 
-  // ID, stepSize, sensorAngle, sensorDistance, turnAngle, colour, hotspot proximity, agents per emitter
+  // ID, stepSize, sensorAngle, sensorDistance, turnAngle, colour, hotspot proximity, agents per emitter, min journeys
   // original 1.5, PI / 6. 10, 0.3
   
-  group_a = new SlimeGroup(0, 5,    0.20, 25, 0.08, 'blue', 80, 100)
-  group_b = new SlimeGroup(1, 0.25, 0.60, 18, 1.25, 'red', 20, 400)
-  group_c = new SlimeGroup(1, 3,    0.50, 18, 1.25, 'green', 10, 600)
+  group_a = new SlimeGroup(0, 5,    0.20, 25, 0.08, 'blue', 80, 100, 30)
+  group_b = new SlimeGroup(1, 0.25, 0.60, 18, 1.25, 'red', 20, 400, 10)
+  group_c = new SlimeGroup(1, 1,    0.50, 18, 1.25, 'green', 30, 600, 10)
 
   group_a.setAttraction(group_a.id,  0.02);
   group_a.setAttraction(group_b.id, -1);
@@ -398,7 +398,7 @@ function keyPressed() {
     saveJSON(emitters, 'emitters.json');
     saveJSON(hotspots, 'hotspots.json');
     saveJSON(journeys, 'journeys.json');
-    saveJSON(groups, 'groups.json');
+    saveJSON(slimegroups, 'groups.json');
 
 
   }

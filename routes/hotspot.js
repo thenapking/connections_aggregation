@@ -69,7 +69,7 @@ class Hotspot {
 
     let r = this.major ? 20 : 2;
     // TODO
-    let emitter = new Emitter(this.position.x, this.position.y, this.group);
+    let emitter = new Emitter(this.position.x, this.position.y, this.group, false);
     let attractor = new Attractor(this.position.x, this.position.y, r);
 
     emitter.hotspot = this;

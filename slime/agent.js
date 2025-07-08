@@ -179,7 +179,7 @@ class SlimeAgent {
     }
 
     if (!new_emitter) {
-      new_emitter = new Emitter(this.position.x, this.position.y, this.group);
+      new_emitter = new Emitter(this.position.x, this.position.y, this.group, false);
       let attractor = new Attractor(this.position.x, this.position.y, 2);
       emitters.push(new_emitter);
       new_emitter.attractor = attractor;
@@ -194,7 +194,7 @@ class SlimeAgent {
     }
 
     if (!previous_emitter) {
-      previous_emitter = new Emitter(previous_position.x, previous_position.y, this.group);
+      previous_emitter = new Emitter(previous_position.x, previous_position.y, this.group, false);
       let attractor = new Attractor(previous_position.x, previous_position.y, 2);
       emitters.push(previous_emitter);
       previous_emitter.attractor = attractor;

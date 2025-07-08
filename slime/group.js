@@ -1,5 +1,9 @@
 class SlimeGroup {
-  constructor(id, stepSize, sensorAngle, sensorDistance, turnAngle, colour, hotspot_proximity = 40, agents_per_emitter = 100) {
+  constructor(id, stepSize, sensorAngle, sensorDistance, turnAngle, 
+    colour, 
+    hotspot_proximity = 40, agents_per_emitter = 100,
+    min_journeys = MIN_JOURNEYS_TO_DRAW
+    ) {
     this.id = id;
     this.stepSize = stepSize;
     this.sensorAngle = sensorAngle;
@@ -10,6 +14,7 @@ class SlimeGroup {
     this.colour = colour;
     this.hotspot_proximity = hotspot_proximity; 
     this.agents_per_emitter = agents_per_emitter;
+    this.min_journeys = min_journeys;
   }
 
   setAttraction(other_id, value) {

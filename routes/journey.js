@@ -74,7 +74,7 @@ class Journey {
 }
 
 function filter_journeys(group){
-  filtered_journeys = journeys.filter(j => (j.count >= MIN_JOURNEYS_TO_DRAW) && (j.group.id === group.id));
+  filtered_journeys = journeys.filter(j => (j.count >= group.min_journeys) && (j.group.id === group.id));
 }
 
 function extract_journey_points(){
